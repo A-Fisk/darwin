@@ -25,6 +25,7 @@ dev-dependencies = [
     "mypy>=1.9",
     "ruff>=0.4",
     "types-setuptools",
+    "pre-commit>=3.0",
 ]
 
 [tool.ruff]

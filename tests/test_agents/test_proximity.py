@@ -63,7 +63,8 @@ class TestProximityRun:
             MockClient.return_value.messages.create.return_value = _mock_message(payload)
             result = proximity.run(_make_state(hypotheses=hyps))
 
-        all_ids = {hid for cluster in result["proximity_clusters"] for hid in cluster}  # type: ignore[union-attr]
+        clusters = result["proximity_clusters"]  # type: ignore[union-attr]
+        all_ids = {hid for cluster in clusters for hid in cluster}
         assert all_ids == {"a", "b", "c"}
 
     def test_unclustered_ids_appended(self) -> None:
@@ -75,7 +76,8 @@ class TestProximityRun:
             MockClient.return_value.messages.create.return_value = _mock_message(payload)
             result = proximity.run(_make_state(hypotheses=hyps))
 
-        all_ids = {hid for cluster in result["proximity_clusters"] for hid in cluster}  # type: ignore[union-attr]
+        clusters = result["proximity_clusters"]  # type: ignore[union-attr]
+        all_ids = {hid for cluster in clusters for hid in cluster}
         assert "c" in all_ids  # c rescued into new cluster
 
     def test_cluster_count_matches_llm_output(self) -> None:
@@ -107,5 +109,6 @@ class TestProximityRun:
             result = proximity.run(_make_state(hypotheses=[hyp_v1, hyp_v2]))
 
         # Should still work without error; deduplicated pool has 1 item
-        all_ids = [hid for cluster in result["proximity_clusters"] for hid in cluster]  # type: ignore[union-attr]
+        clusters = result["proximity_clusters"]  # type: ignore[union-attr]
+        all_ids = [hid for cluster in clusters for hid in cluster]
         assert all_ids.count("dup") == 1

@@ -31,27 +31,32 @@ def _print_verbose_output(node_name: str, update: dict[str, object]) -> None:
     if node_name == "generation":
         hypotheses = update.get("hypotheses", [])
         for h in hypotheses:  # type: ignore[union-attr]
-            console.print(f"    [yellow]•[/yellow] ({h['id']}) {escape(h['text'])}")  # type: ignore[index]
+            txt = escape(h["text"])  # type: ignore[index]
+            console.print(f"    [yellow]•[/yellow] ({h['id']}) {txt}")
 
     elif node_name == "reflection":
         hypotheses = update.get("hypotheses", [])
         for h in hypotheses:  # type: ignore[union-attr]
             score = h["score"]  # type: ignore[index]
             critique = h["reflections"][-1] if h["reflections"] else ""  # type: ignore[index]
-            console.print(f"    [yellow]•[/yellow] ({h['id']}) score={score:.2f}")  # type: ignore[index]
+            hid = h["id"]  # type: ignore[index]
+            console.print(f"    [yellow]•[/yellow] ({hid}) score={score:.2f}")
             if critique:
                 console.print(f"      [dim]{escape(str(critique))}[/dim]")
 
     elif node_name == "ranking":
         top = update.get("top_hypotheses", [])
         for i, h in enumerate(top, 1):  # type: ignore[union-attr]
-            console.print(f"    [yellow]{i}.[/yellow] ({h['id']}) score={h['score']:.2f} — {escape(h['text'])}")  # type: ignore[index]
+            txt = escape(h["text"])  # type: ignore[index]
+            line = f"    [yellow]{i}.[/yellow] ({h['id']}) score={h['score']:.2f} — {txt}"
+            console.print(line)
 
     elif node_name == "evolution":
         hypotheses = update.get("hypotheses", [])
         for h in hypotheses:  # type: ignore[union-attr]
             parent = h.get("evolved_from", "?")  # type: ignore[union-attr]
-            console.print(f"    [yellow]•[/yellow] ({h['id']}) ← {parent}: {escape(h['text'])}")  # type: ignore[index]
+            txt = escape(h["text"])  # type: ignore[index]
+            console.print(f"    [yellow]•[/yellow] ({h['id']}) ← {parent}: {txt}")
 
     elif node_name == "meta_review":
         notes = update.get("meta_review_notes", "")

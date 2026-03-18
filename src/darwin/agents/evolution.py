@@ -31,7 +31,9 @@ def run(state: ResearchState) -> dict[str, object]:
     if not parents:
         return {
             "hypotheses": [],
-            "messages": [{"role": "agent", "agent": "evolution", "content": "no top hypotheses to evolve"}],
+            "messages": [
+                {"role": "agent", "agent": "evolution", "content": "no top hypotheses to evolve"}
+            ],
         }
 
     parents_text = "\n".join(

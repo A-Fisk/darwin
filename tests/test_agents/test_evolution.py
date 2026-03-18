@@ -122,7 +122,9 @@ class TestEvolutionRun:
         from darwin.config import EVOLVED_PER_ITERATION
         parents = [_hyp("p1")]
         # API returns more than expected
-        items = [{"text": f"evolved {i}", "parent_id": "p1"} for i in range(EVOLVED_PER_ITERATION + 5)]
+        items = [
+            {"text": f"evolved {i}", "parent_id": "p1"} for i in range(EVOLVED_PER_ITERATION + 5)
+        ]
         payload = json.dumps(items)
         with patch("darwin.agents.evolution.anthropic.Anthropic") as MockClient:
             MockClient.return_value.messages.create.return_value = _mock_message(payload)

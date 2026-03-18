@@ -25,7 +25,9 @@ def run(state: ResearchState) -> dict[str, object]:
     if not pool:
         return {
             "proximity_clusters": [],
-            "messages": [{"role": "agent", "agent": "proximity", "content": "no hypotheses to cluster"}],
+            "messages": [
+                {"role": "agent", "agent": "proximity", "content": "no hypotheses to cluster"}
+            ],
         }
 
     hypotheses_text = "\n".join(

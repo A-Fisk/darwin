@@ -18,7 +18,8 @@ Output a JSON object with:
 Decision guidelines:
   "continue" — research is progressing; more iterations are likely to yield improvements
   "stop"     — hypotheses are high quality and sufficiently diverse; further iteration adds little
-  "human_review" — research has stalled, results are ambiguous, or a key decision requires human judgement
+  "human_review" — research has stalled, results are ambiguous, or a key decision
+                   requires human judgement
 
 Output ONLY valid JSON — no prose, no markdown fences."""
 

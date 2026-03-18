@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import anthropic
 
-from darwin.agents._common import latest_hypotheses, parse_json_response
+from darwin.agents._common import parse_json_response
 from darwin.state import Hypothesis, ResearchState
 
 _SYSTEM = """\
@@ -27,7 +27,11 @@ def run(state: ResearchState) -> dict[str, object]:
     if not current:
         return {
             "messages": [
-                {"role": "agent", "agent": "reflection", "content": "no new hypotheses to reflect on"}
+                {
+                    "role": "agent",
+                    "agent": "reflection",
+                    "content": "no new hypotheses to reflect on",
+                }
             ]
         }
 

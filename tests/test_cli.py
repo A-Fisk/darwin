@@ -1,11 +1,7 @@
 """Tests for the CLI --verbose flag."""
 from __future__ import annotations
 
-import sys
-from io import StringIO
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from darwin.cli import _print_verbose_output, _stream_with_progress, main
 
@@ -102,7 +98,9 @@ class TestStreamWithProgressVerbose:
         graph = self._make_graph(events)
         with patch("darwin.cli._print_verbose_output") as mock_print_verbose:
             _stream_with_progress(graph, {}, {}, max_iterations=3, verbose=True)
-        mock_print_verbose.assert_called_once_with("supervisor", {"iteration": 1, "supervisor_decision": "stop"})
+        mock_print_verbose.assert_called_once_with(
+            "supervisor", {"iteration": 1, "supervisor_decision": "stop"}
+        )
 
     def test_non_verbose_does_not_call_print_verbose_output(self) -> None:
         events = [
