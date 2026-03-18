@@ -31,7 +31,8 @@ def _make_state(**kwargs) -> ResearchState:
 
 def _mock_message(text: str) -> MagicMock:
     msg = MagicMock()
-    msg.content = [MagicMock(text=text)]
+    msg.stop_reason = "end_turn"
+    msg.content = [MagicMock(type="text", text=text)]
     return msg
 
 

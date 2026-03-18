@@ -31,6 +31,12 @@ def parse_json_response(message: anthropic.types.Message) -> object:
     text = re.sub(r"\s*```$", "", text)
     text = text.strip()
 
+    if message.stop_reason == "max_tokens":
+        raise ValueError(
+            f"Claude API response was truncated (stop_reason='max_tokens'). "
+            f"Response length: {len(text)} chars. Increase max_tokens for this agent."
+        )
+
     return json.loads(text)
 
 

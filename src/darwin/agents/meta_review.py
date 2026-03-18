@@ -42,7 +42,7 @@ def run(state: ResearchState) -> dict[str, object]:
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=512,
+        max_tokens=1024,
         system=_SYSTEM,
         messages=[{"role": "user", "content": prompt}],
     )
