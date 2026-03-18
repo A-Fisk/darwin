@@ -23,21 +23,16 @@ jobs:
         run: uv python install 3.11
 
       - name: Install dependencies
-        working-directory: darwin
         run: uv sync --all-extras
 
       - name: Lint (ruff)
-        working-directory: darwin
         run: uv run ruff check src/ tests/
 
       - name: Format check (ruff)
-        working-directory: darwin
         run: uv run ruff format --check src/ tests/
 
       - name: Type check (mypy)
-        working-directory: darwin
         run: uv run mypy src/darwin/
 
       - name: Tests
-        working-directory: darwin
         run: uv run pytest tests/ -v
