@@ -1,13 +1,68 @@
 """Meta-review agent — cross-iteration quality audit."""
 from __future__ import annotations
 
+import json
+
+import anthropic
+
+from darwin.agents._common import latest_hypotheses
+from darwin.config import TOP_N_HYPOTHESES
 from darwin.state import ResearchState
+
+_SYSTEM = """\
+You are a research quality auditor performing a cross-iteration review.
+Given a topic, the current iteration, and the top hypotheses so far, assess overall progress.
+
+Output a JSON object with:
+  "decision": one of "continue", "stop", or "human_review"
+  "notes": a brief audit summary (2-4 sentences)
+
+Decision guidelines:
+  "continue" — research is progressing; more iterations are likely to yield improvements
+  "stop"     — hypotheses are high quality and sufficiently diverse; further iteration adds little
+  "human_review" — research has stalled, results are ambiguous, or a key decision requires human judgement
+
+Output ONLY valid JSON — no prose, no markdown fences."""
 
 
 def run(state: ResearchState) -> dict[str, object]:
-    """Audit quality across iterations. Stub — to be implemented in da-7nx."""
+    """Audit hypothesis quality across iterations and set supervisor_decision."""
+    client = anthropic.Anthropic()
+
+    pool = latest_hypotheses(state["hypotheses"])
+    top = state.get("top_hypotheses") or pool[:TOP_N_HYPOTHESES]
+
+    top_text = "\n".join(
+        f'[score={h["score"]:.2f}] {h["text"]}' for h in top
+    )
+    prompt = (
+        f"Topic: {state['topic']}\n"
+        f"Iteration: {state['iteration']} / {state['max_iterations']}\n"
+        f"Total hypotheses generated so far: {len(pool)}\n\n"
+        f"Top hypotheses:\n{top_text}"
+    )
+
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=512,
+        system=_SYSTEM,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    result: dict[str, str] = json.loads(message.content[0].text)
+    decision = result.get("decision", "continue")
+    if decision not in ("continue", "stop", "human_review"):
+        decision = "continue"
+    notes = result.get("notes", "")
+
     return {
-        "supervisor_decision": "continue",
-        "meta_review_notes": "",
-        "messages": [{"role": "agent", "agent": "meta_review", "content": "stub"}],
+        "supervisor_decision": decision,
+        "meta_review_notes": notes,
+        "messages": [
+            {
+                "role": "agent",
+                "agent": "meta_review",
+                "content": f"decision={decision}; {notes}",
+            }
+        ],
     }
