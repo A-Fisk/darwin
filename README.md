@@ -10,20 +10,21 @@ Built with [LangGraph](https://github.com/langchain-ai/langgraph) + [Claude](htt
 
 ## What it does
 
-darwin orchestrates a graph of eight agents that iterate over a hypothesis pool:
+darwin orchestrates a graph of nine agents that iterate over a hypothesis pool:
 
 | Agent | Role |
 |---|---|
 | **Supervisor** | Routes each iteration: continue generating, request human review, or stop |
-| **Generation** | Produces 5 new hypotheses per iteration using Claude |
-| **Reflection** | Critiques each hypothesis and assigns a scientific merit score (0–1) |
-| **Ranking** | Runs an Elo pairwise tournament to sort hypotheses by quality |
+| **Literature** | Fetches relevant papers from Semantic Scholar to ground hypothesis generation |
+| **Generation** | Produces 5 new hypotheses per iteration, citing supporting papers |
+| **Reflection** | Critiques each hypothesis using configurable criteria and assigns a score (0–1) |
+| **Ranking** | Runs an Elo pairwise tournament; literature-grounded hypotheses get a boost |
 | **Proximity** | Clusters hypotheses by semantic similarity to surface thematic groups |
 | **Evolution** | Mutates and combines top hypotheses into refined candidates |
 | **Meta-review** | Cross-iteration quality audit; decides whether to continue, stop, or escalate to human |
 | **Human review** | Pauses the graph for interactive human feedback (triggered by meta-review) |
 
-Each iteration runs the full pipeline (generation → reflection → ranking → proximity → evolution → meta-review) and feeds results back to the supervisor.
+Each iteration runs the full pipeline (literature → generation → reflection → ranking → proximity → evolution → meta-review) and feeds results back to the supervisor.
 
 ---
 
@@ -75,16 +76,38 @@ uv run darwin "Novel mechanisms for carbon capture" --iterations 10
 ## How it works
 
 1. The **supervisor** starts the first iteration.
-2. **Generation** produces 5 new hypotheses; **evolution** adds 3 more by mutating top candidates from the prior round.
-3. **Reflection** critiques every new hypothesis and scores it (0–1).
-4. **Ranking** runs an Elo tournament across all scored hypotheses and selects the top 3.
-5. **Proximity** clusters the top pool by semantic theme.
-6. **Meta-review** audits progress across iterations and issues a decision:
+2. **Literature** fetches up to 10 papers from [Semantic Scholar](https://www.semanticscholar.org/) for the research topic (once per run; no API key required).
+3. **Generation** produces 5 new hypotheses grounded in the retrieved papers; each cites which papers it builds on.
+4. **Evolution** adds 3 more hypotheses by mutating top candidates from the prior round.
+5. **Reflection** critiques every new hypothesis against configurable criteria (see `criteria.toml`) and scores it (0–1).
+6. **Ranking** runs an Elo tournament; literature-backed hypotheses gain an advantage when otherwise equal.
+7. **Proximity** clusters the top pool by semantic theme.
+8. **Meta-review** audits progress across iterations and issues a decision:
    - `continue` — keep iterating
    - `stop` — hypotheses are good enough
    - `human_review` — pause and ask the user
-7. If `human_review` is triggered, the terminal displays the current top hypotheses and prompts for feedback. Type `stop` to halt, or enter any text to guide the next iteration.
-8. When the loop ends, the final ranked hypotheses and meta-review notes are printed.
+9. If `human_review` is triggered, the terminal displays the current top hypotheses and prompts for feedback. Type `stop` to halt, or enter any text to guide the next iteration.
+10. When the loop ends, the final ranked hypotheses and meta-review notes are printed.
+
+---
+
+## Configuring evaluation criteria
+
+Evaluation criteria are defined in `src/darwin/criteria.toml`. Edit the file to tune what the system values without touching agent code:
+
+```toml
+[[criteria]]
+name = "novelty"
+description = "The hypothesis proposes something genuinely new..."
+weight = 1.0
+
+[[criteria]]
+name = "literature_support"
+description = "The hypothesis builds on or extends the retrieved literature..."
+weight = 0.8
+```
+
+Each criterion has a `name`, `description` (shown to the LLM judge), and `weight` (relative importance; normalised at runtime).
 
 ---
 

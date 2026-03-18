@@ -19,6 +19,7 @@ def build_graph(checkpointer: Any = None) -> Any:
         evolution,
         generation,
         human_review,
+        literature,
         meta_review,
         proximity,
         ranking,
@@ -29,6 +30,7 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder: StateGraph[ResearchState] = StateGraph(ResearchState)
 
     builder.add_node("supervisor", supervisor.run)
+    builder.add_node("literature", literature.run)
     builder.add_node("generation", generation.run)
     builder.add_node("reflection", reflection.run)
     builder.add_node("ranking", ranking.run)
@@ -43,12 +45,13 @@ def build_graph(checkpointer: Any = None) -> Any:
         "supervisor",
         supervisor.route,
         {
-            "generate": "generation",
+            "generate": "literature",
             "human_review": "human_review",
             "end": END,
         },
     )
 
+    builder.add_edge("literature", "generation")
     builder.add_edge("generation", "reflection")
     builder.add_edge("reflection", "ranking")
     builder.add_edge("ranking", "proximity")

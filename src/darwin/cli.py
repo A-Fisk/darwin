@@ -14,6 +14,7 @@ console = Console()
 
 # After a node completes, what spinner text to show while next node runs
 _NEXT_STATUS: dict[str, str] = {
+    "literature": "  ⟳ generation...",
     "generation": "  ⟳ reflection...",
     "reflection": "  ⟳ ranking...",
     "ranking": "  ⟳ proximity...",
@@ -28,7 +29,21 @@ def _print_verbose_output(node_name: str, update: dict[str, object]) -> None:
     """Print agent output details in verbose mode."""
     console.print(f"  [bold cyan]{node_name} output:[/bold cyan]")
 
-    if node_name == "generation":
+    if node_name == "literature":
+        papers: list[dict[str, object]] = update.get("literature_context") or []  # type: ignore[assignment]
+        if papers:
+            console.print(f"    [dim]fetched {len(papers)} papers[/dim]")
+            for p in papers[:3]:
+                title = escape(str(p.get("title", "")))
+                console.print(f"    [yellow]•[/yellow] {title}")
+            if len(papers) > 3:
+                console.print(f"    [dim]... and {len(papers) - 3} more[/dim]")
+        else:
+            msgs: list[dict[str, object]] = update.get("messages") or []  # type: ignore[assignment]
+            content = msgs[0]["content"] if msgs else "no papers fetched"
+            console.print(f"    [dim]{content}[/dim]")
+
+    elif node_name == "generation":
         hypotheses = update.get("hypotheses", [])
         for h in hypotheses:  # type: ignore[union-attr]
             txt = escape(h["text"])  # type: ignore[index]
@@ -106,7 +121,7 @@ def _stream_with_progress(
                 console.print(f"\n[bold]Iteration {iteration}/{max_iterations}[/bold]")
 
                 if decision == "continue":
-                    status.update("  ⟳ generation...")
+                    status.update("  ⟳ literature...")
                 elif decision == "human_review":
                     status.update("  ⟳ human_review...")
                 # "stop" → stream will end after this node
@@ -156,6 +171,7 @@ def main() -> None:
         "max_iterations": args.iterations,
         "iteration": 0,
         "hypotheses": [],
+        "literature_context": [],
         "ranked_ids": [],
         "top_hypotheses": [],
         "proximity_clusters": [],

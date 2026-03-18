@@ -1,0 +1,28 @@
+# Darwin evaluation criteria for scientific hypotheses.
+# Each criterion has a name, description, and weight (relative importance).
+# Weights are normalised at runtime — they do not need to sum to 1.0.
+
+[[criteria]]
+name = "novelty"
+description = "The hypothesis proposes something genuinely new, not merely restating known results."
+weight = 1.0
+
+[[criteria]]
+name = "testability"
+description = "The hypothesis can be empirically tested or falsified with concrete experiments."
+weight = 1.0
+
+[[criteria]]
+name = "specificity"
+description = "The hypothesis is precise and makes clear, unambiguous predictions."
+weight = 1.0
+
+[[criteria]]
+name = "scientific_merit"
+description = "The hypothesis is scientifically plausible, internally consistent, and grounded in domain knowledge."
+weight = 1.0
+
+[[criteria]]
+name = "literature_support"
+description = "The hypothesis builds on, extends, challenges, or synthesises from the retrieved literature in a meaningful way."
+weight = 0.8

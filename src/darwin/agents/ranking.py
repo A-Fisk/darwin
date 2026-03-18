@@ -5,7 +5,7 @@ from itertools import combinations
 
 import anthropic
 
-from darwin.agents._common import latest_hypotheses, parse_json_response
+from darwin.agents._common import criteria_prompt_block, latest_hypotheses, parse_json_response
 from darwin.config import TOP_N_HYPOTHESES
 from darwin.state import Hypothesis, ResearchState
 
@@ -15,10 +15,15 @@ _SYSTEM = """\
 You are a scientific judge comparing two research hypotheses.
 Given a topic and two hypotheses (A and B), decide which is scientifically stronger.
 
+Evaluate using these criteria:
+{criteria}
+
+When all other criteria are equal, a hypothesis that is grounded in or meaningfully
+extends the relevant literature should be preferred over one that is not.
+
 Output a JSON object with one key:
   "winner": "a", "b", or "draw"
 
-Criteria: novelty, testability, specificity, scientific merit.
 Output ONLY valid JSON — no prose, no markdown fences."""
 
 
@@ -49,21 +54,36 @@ def run(state: ResearchState) -> dict[str, object]:
             "messages": [{"role": "agent", "agent": "ranking", "content": "no hypotheses to rank"}],
         }
 
+    criteria_block = criteria_prompt_block()
+    system = _SYSTEM.format(criteria=criteria_block)
+
+    # Build literature title index for context in pairwise prompts
+    lit_context: list[dict[str, str]] = state.get("literature_context") or []
+    lit_index: dict[str, str] = {
+        p["paper_id"]: p.get("title", "") for p in lit_context if p.get("paper_id")
+    }
+
     # Seed Elo ratings from existing scores (scaled to 800–1200 range)
     ratings: dict[str, float] = {h["id"]: 800.0 + h["score"] * 400.0 for h in pool}
 
     # Pairwise tournament — ask LLM to judge each pair
     pairs = list(combinations(pool, 2))
     for ha, hb in pairs:
+        # Annotate with cited literature titles if available
+        def refs_note(h: Hypothesis) -> str:
+            refs = h.get("references", [])
+            titles = [lit_index[r] for r in refs if r in lit_index]
+            return f" [cites: {'; '.join(titles)}]" if titles else ""
+
         prompt = (
             f"Topic: {state['topic']}\n\n"
-            f"Hypothesis A: {ha['text']}\n\n"
-            f"Hypothesis B: {hb['text']}"
+            f"Hypothesis A: {ha['text']}{refs_note(ha)}\n\n"
+            f"Hypothesis B: {hb['text']}{refs_note(hb)}"
         )
         message = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=64,
-            system=_SYSTEM,
+            system=system,
             messages=[{"role": "user", "content": prompt}],
         )
         result: dict[str, str] = parse_json_response(message)  # type: ignore[assignment]
@@ -93,6 +113,7 @@ def run(state: ResearchState) -> dict[str, object]:
             reflections=h["reflections"],
             generation=h["generation"],
             evolved_from=h["evolved_from"],
+            references=h.get("references", []),
         )
         for h in sorted_pool
     ]

@@ -10,9 +10,11 @@ def test_hypothesis_structure() -> None:
         "reflections": ["good point"],
         "generation": 1,
         "evolved_from": None,
+        "references": ["paper123"],
     }
     assert h["id"] == "abc123"
     assert h["evolved_from"] is None
+    assert h["references"] == ["paper123"]
 
 
 def test_research_state_structure() -> None:
@@ -21,6 +23,7 @@ def test_research_state_structure() -> None:
         "max_iterations": 5,
         "iteration": 0,
         "hypotheses": [],
+        "literature_context": [],
         "ranked_ids": [],
         "top_hypotheses": [],
         "proximity_clusters": [],
@@ -32,3 +35,4 @@ def test_research_state_structure() -> None:
     }
     assert state["topic"] == "test topic"
     assert state["iteration"] == 0
+    assert state["literature_context"] == []

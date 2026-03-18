@@ -12,6 +12,7 @@ class Hypothesis(TypedDict):
     reflections: list[str]       # Critique notes from reflection agent
     generation: int              # Which iteration produced this hypothesis
     evolved_from: str | None     # Parent hypothesis id, or None
+    references: list[str]        # Paper IDs from literature_context that support this hypothesis
 
 
 class ResearchState(TypedDict):
@@ -24,6 +25,9 @@ class ResearchState(TypedDict):
 
     # --- Hypothesis pool ---
     hypotheses: Annotated[list[Hypothesis], operator.add]
+
+    # --- Literature context (fetched once per run by literature agent) ---
+    literature_context: list[dict[str, str]]  # fields: title, abstract, authors, url, paper_id
 
     # --- Per-iteration working state ---
     ranked_ids: list[str]

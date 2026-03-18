@@ -1,8 +1,11 @@
 """Shared utilities for darwin agent nodes."""
 from __future__ import annotations
 
+import importlib.resources
 import json
 import re
+import tomllib
+from typing import NamedTuple
 
 import anthropic
 
@@ -51,3 +54,40 @@ def latest_hypotheses(hypotheses: list[Hypothesis]) -> list[Hypothesis]:
     for h in hypotheses:
         seen[h["id"]] = h
     return list(seen.values())
+
+
+class Criterion(NamedTuple):
+    name: str
+    description: str
+    weight: float
+
+
+_criteria_cache: list[Criterion] | None = None
+
+
+def load_criteria() -> list[Criterion]:
+    """Load evaluation criteria from criteria.toml (cached after first load)."""
+    global _criteria_cache
+    if _criteria_cache is not None:
+        return _criteria_cache
+
+    data = importlib.resources.files("darwin").joinpath("criteria.toml").read_bytes()
+    config = tomllib.loads(data.decode())
+    _criteria_cache = [
+        Criterion(
+            name=c["name"],
+            description=c["description"],
+            weight=float(c.get("weight", 1.0)),
+        )
+        for c in config.get("criteria", [])
+    ]
+    return _criteria_cache
+
+
+def criteria_prompt_block() -> str:
+    """Return a formatted criteria list suitable for embedding in prompts."""
+    criteria = load_criteria()
+    lines = []
+    for c in criteria:
+        lines.append(f"- {c.name} (weight {c.weight}): {c.description}")
+    return "\n".join(lines)

@@ -71,6 +71,7 @@ def run(state: ResearchState) -> dict[str, object]:
                 reflections=[],
                 generation=iteration,
                 evolved_from=parent_id,
+                references=[],
             )
         )
 
