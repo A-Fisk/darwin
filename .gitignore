@@ -1,0 +1,11 @@
+# Runtime / agent state (not source code)
+.beads/
+.claude/
+.runtime/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
