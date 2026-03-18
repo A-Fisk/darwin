@@ -6,6 +6,7 @@ import uuid
 from typing import Any
 
 from rich.console import Console
+from rich.markup import escape
 
 from darwin.config import DEFAULT_MAX_ITERATIONS
 
@@ -23,11 +24,52 @@ _NEXT_STATUS: dict[str, str] = {
 }
 
 
+def _print_verbose_output(node_name: str, update: dict[str, object]) -> None:
+    """Print agent output details in verbose mode."""
+    console.print(f"  [bold cyan]{node_name} output:[/bold cyan]")
+
+    if node_name == "generation":
+        hypotheses = update.get("hypotheses", [])
+        for h in hypotheses:  # type: ignore[union-attr]
+            console.print(f"    [yellow]•[/yellow] ({h['id']}) {escape(h['text'])}")  # type: ignore[index]
+
+    elif node_name == "reflection":
+        hypotheses = update.get("hypotheses", [])
+        for h in hypotheses:  # type: ignore[union-attr]
+            score = h["score"]  # type: ignore[index]
+            critique = h["reflections"][-1] if h["reflections"] else ""  # type: ignore[index]
+            console.print(f"    [yellow]•[/yellow] ({h['id']}) score={score:.2f}")  # type: ignore[index]
+            if critique:
+                console.print(f"      [dim]{escape(str(critique))}[/dim]")
+
+    elif node_name == "ranking":
+        top = update.get("top_hypotheses", [])
+        for i, h in enumerate(top, 1):  # type: ignore[union-attr]
+            console.print(f"    [yellow]{i}.[/yellow] ({h['id']}) score={h['score']:.2f} — {escape(h['text'])}")  # type: ignore[index]
+
+    elif node_name == "evolution":
+        hypotheses = update.get("hypotheses", [])
+        for h in hypotheses:  # type: ignore[union-attr]
+            parent = h.get("evolved_from", "?")  # type: ignore[union-attr]
+            console.print(f"    [yellow]•[/yellow] ({h['id']}) ← {parent}: {escape(h['text'])}")  # type: ignore[index]
+
+    elif node_name == "meta_review":
+        notes = update.get("meta_review_notes", "")
+        if notes:
+            console.print(f"    [dim]{notes}[/dim]")
+
+    elif node_name == "supervisor":
+        decision = update.get("supervisor_decision", "")
+        if decision:
+            console.print(f"    decision: [bold]{decision}[/bold]")
+
+
 def _stream_with_progress(
     graph: Any,
     state_input: Any,
     config: dict[str, object],
     max_iterations: int,
+    verbose: bool = False,
 ) -> None:
     """Stream one graph pass, printing per-node progress via Rich Status."""
     with console.status("  ⟳ supervisor...", spinner="dots") as status:
@@ -39,6 +81,9 @@ def _stream_with_progress(
                 continue
 
             console.print(f"  [green]✓[/green] {node_name}")
+
+            if verbose:
+                _print_verbose_output(node_name, update)
 
             if node_name == "supervisor":
                 iteration: int = int(update.get("iteration", 0))
@@ -84,6 +129,11 @@ def main() -> None:
         default=DEFAULT_MAX_ITERATIONS,
         help=f"Maximum number of iterations (default: {DEFAULT_MAX_ITERATIONS})",
     )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Print each agent's raw output as it completes",
+    )
     args = parser.parse_args()
 
     from langgraph.checkpoint.memory import MemorySaver
@@ -119,7 +169,7 @@ def main() -> None:
     state_input: Any = initial_state
 
     while True:
-        _stream_with_progress(graph, state_input, config, args.iterations)
+        _stream_with_progress(graph, state_input, config, args.iterations, verbose=args.verbose)
 
         # Check for human-review interrupts
         state_snapshot = graph.get_state(config)
