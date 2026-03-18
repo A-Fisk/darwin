@@ -1,4 +1,5 @@
 """Tests for the supervisor agent (routing decisions)."""
+
 from __future__ import annotations
 
 import json
@@ -31,8 +32,9 @@ def _make_state(**kwargs) -> ResearchState:
 
 
 def _hyp(id: str, score: float = 0.8) -> Hypothesis:
-    return Hypothesis(id=id, text=f"hyp {id}", score=score,
-                      reflections=[], generation=1, evolved_from=None)
+    return Hypothesis(
+        id=id, text=f"hyp {id}", score=score, reflections=[], generation=1, evolved_from=None
+    )
 
 
 def _mock_message(text: str) -> MagicMock:
@@ -99,6 +101,33 @@ class TestSupervisorRun:
 
         assert "messages" in result
         assert len(result["messages"]) == 1
+
+    def test_stop_populates_final_hypotheses(self) -> None:
+        top = [_hyp("h1", 0.9), _hyp("h2", 0.8)]
+        payload = json.dumps({"decision": "stop"})
+        with patch("darwin.agents.supervisor.anthropic.Anthropic") as MockClient:
+            MockClient.return_value.messages.create.return_value = _mock_message(payload)
+            result = supervisor.run(_make_state(iteration=2, top_hypotheses=top))
+
+        assert result.get("final_hypotheses") == top
+
+    def test_continue_does_not_populate_final_hypotheses(self) -> None:
+        payload = json.dumps({"decision": "continue"})
+        with patch("darwin.agents.supervisor.anthropic.Anthropic") as MockClient:
+            MockClient.return_value.messages.create.return_value = _mock_message(payload)
+            result = supervisor.run(_make_state(iteration=1, max_iterations=5))
+
+        assert "final_hypotheses" not in result
+
+    def test_max_iterations_exceeded_populates_final_hypotheses(self) -> None:
+        top = [_hyp("h1", 0.9)]
+        payload = json.dumps({"decision": "continue"})
+        with patch("darwin.agents.supervisor.anthropic.Anthropic") as MockClient:
+            MockClient.return_value.messages.create.return_value = _mock_message(payload)
+            # iteration=5, max_iterations=5 → new_iteration=6 > 5 → terminal
+            result = supervisor.run(_make_state(iteration=5, max_iterations=5, top_hypotheses=top))
+
+        assert result.get("final_hypotheses") == top
 
 
 class TestSupervisorRoute:

@@ -1,4 +1,5 @@
 """Supervisor agent — routes each iteration to generation, human_review, or END."""
+
 from __future__ import annotations
 
 from typing import Literal
@@ -45,7 +46,7 @@ def run(state: ResearchState) -> dict[str, object]:
     client = anthropic.Anthropic()
     pool = latest_hypotheses(state["hypotheses"])
     top = state.get("top_hypotheses") or pool[:TOP_N_HYPOTHESES]
-    top_text = "\n".join(f'[score={h["score"]:.2f}] {h["text"]}' for h in top)
+    top_text = "\n".join(f"[score={h['score']:.2f}] {h['text']}" for h in top)
 
     prior_decision = state.get("supervisor_decision", "continue")
     prompt = (
@@ -67,7 +68,7 @@ def run(state: ResearchState) -> dict[str, object]:
     if decision not in ("continue", "stop", "human_review"):
         decision = prior_decision
 
-    return {
+    update: dict[str, object] = {
         "iteration": new_iteration,
         "supervisor_decision": decision,
         "messages": [
@@ -78,6 +79,12 @@ def run(state: ResearchState) -> dict[str, object]:
             }
         ],
     }
+
+    # Populate final_hypotheses whenever the run is ending
+    if decision == "stop" or new_iteration > state["max_iterations"]:
+        update["final_hypotheses"] = top
+
+    return update
 
 
 def route(state: ResearchState) -> Literal["generate", "human_review", "end"]:
