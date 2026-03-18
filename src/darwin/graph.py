@@ -1,13 +1,20 @@
 """LangGraph graph builder for the darwin co-scientist."""
 from __future__ import annotations
 
+from typing import Any
+
 from langgraph.graph import END, StateGraph
 
 from darwin.state import ResearchState
 
 
-def build_graph() -> object:
-    """Build and compile the research hypothesis graph."""
+def build_graph(checkpointer: Any = None) -> Any:
+    """Build and compile the research hypothesis graph.
+
+    Args:
+        checkpointer: Optional LangGraph checkpointer (e.g. MemorySaver) required
+            for resuming after human-review interrupts.
+    """
     from darwin.agents import (
         evolution,
         generation,
@@ -50,4 +57,4 @@ def build_graph() -> object:
     builder.add_edge("meta_review", "supervisor")
     builder.add_edge("human_review", "supervisor")
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer)
