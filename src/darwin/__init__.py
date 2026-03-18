@@ -1,1 +1,1 @@
-# darwin — AI Co-Scientist multi-agent system
+"""Darwin — AI Co-Scientist multi-agent research hypothesis system."""

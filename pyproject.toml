@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "darwin"
+version = "0.1.0"
+description = "AI Co-Scientist — multi-agent research hypothesis system"
+requires-python = ">=3.11"
+dependencies = [
+    "langgraph>=0.2",
+    "anthropic>=0.40",
+    "rich>=13.0",
+]
+
+[project.scripts]
+darwin = "darwin.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/darwin"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "mypy>=1.9",
+    "ruff>=0.4",
+    "types-setuptools",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
