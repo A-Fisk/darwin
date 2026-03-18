@@ -1,12 +1,11 @@
 """Generation agent — produces new hypotheses each iteration."""
 from __future__ import annotations
 
-import json
 import uuid
 
 import anthropic
 
-from darwin.agents._common import latest_hypotheses
+from darwin.agents._common import latest_hypotheses, parse_json_response
 from darwin.config import NEW_PER_ITERATION
 from darwin.state import Hypothesis, ResearchState
 
@@ -43,7 +42,7 @@ def run(state: ResearchState) -> dict[str, object]:
         messages=[{"role": "user", "content": prompt}],
     )
 
-    items: list[dict[str, str]] = json.loads(message.content[0].text)
+    items: list[dict[str, str]] = parse_json_response(message)  # type: ignore[assignment]
 
     iteration = state["iteration"]
     new_hypotheses: list[Hypothesis] = []

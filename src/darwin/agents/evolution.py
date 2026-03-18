@@ -1,11 +1,11 @@
 """Evolution agent — mutates / combines top hypotheses into new candidates."""
 from __future__ import annotations
 
-import json
 import uuid
 
 import anthropic
 
+from darwin.agents._common import parse_json_response
 from darwin.config import EVOLVED_PER_ITERATION
 from darwin.state import Hypothesis, ResearchState
 
@@ -50,7 +50,7 @@ def run(state: ResearchState) -> dict[str, object]:
         messages=[{"role": "user", "content": prompt}],
     )
 
-    items: list[dict[str, str]] = json.loads(message.content[0].text)
+    items: list[dict[str, str]] = parse_json_response(message)  # type: ignore[assignment]
 
     iteration = state["iteration"]
     parent_ids = {h["id"] for h in parents}

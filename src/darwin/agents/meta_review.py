@@ -1,11 +1,9 @@
 """Meta-review agent — cross-iteration quality audit."""
 from __future__ import annotations
 
-import json
-
 import anthropic
 
-from darwin.agents._common import latest_hypotheses
+from darwin.agents._common import latest_hypotheses, parse_json_response
 from darwin.config import TOP_N_HYPOTHESES
 from darwin.state import ResearchState
 
@@ -49,7 +47,7 @@ def run(state: ResearchState) -> dict[str, object]:
         messages=[{"role": "user", "content": prompt}],
     )
 
-    result: dict[str, str] = json.loads(message.content[0].text)
+    result: dict[str, str] = parse_json_response(message)  # type: ignore[assignment]
     decision = result.get("decision", "continue")
     if decision not in ("continue", "stop", "human_review"):
         decision = "continue"

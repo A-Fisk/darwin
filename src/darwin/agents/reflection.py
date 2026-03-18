@@ -1,11 +1,9 @@
 """Reflection agent — critiques and scores each hypothesis."""
 from __future__ import annotations
 
-import json
-
 import anthropic
 
-from darwin.agents._common import latest_hypotheses
+from darwin.agents._common import latest_hypotheses, parse_json_response
 from darwin.state import Hypothesis, ResearchState
 
 _SYSTEM = """\
@@ -42,7 +40,7 @@ def run(state: ResearchState) -> dict[str, object]:
             system=_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
         )
-        result: dict[str, object] = json.loads(message.content[0].text)
+        result: dict[str, object] = parse_json_response(message)  # type: ignore[assignment]
         updated.append(
             Hypothesis(
                 id=hyp["id"],

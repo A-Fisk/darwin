@@ -1,12 +1,11 @@
 """Ranking agent — Elo K=32 pairwise tournament to sort hypotheses."""
 from __future__ import annotations
 
-import json
 from itertools import combinations
 
 import anthropic
 
-from darwin.agents._common import latest_hypotheses
+from darwin.agents._common import latest_hypotheses, parse_json_response
 from darwin.config import TOP_N_HYPOTHESES
 from darwin.state import Hypothesis, ResearchState
 
@@ -67,7 +66,7 @@ def run(state: ResearchState) -> dict[str, object]:
             system=_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
         )
-        result: dict[str, str] = json.loads(message.content[0].text)
+        result: dict[str, str] = parse_json_response(message)  # type: ignore[assignment]
         winner = result.get("winner", "draw")
         ratings[ha["id"]], ratings[hb["id"]] = _elo_update(
             ratings[ha["id"]], ratings[hb["id"]], winner

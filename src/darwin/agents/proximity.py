@@ -1,11 +1,9 @@
 """Proximity agent — clusters hypotheses by semantic similarity."""
 from __future__ import annotations
 
-import json
-
 import anthropic
 
-from darwin.agents._common import latest_hypotheses
+from darwin.agents._common import latest_hypotheses, parse_json_response
 from darwin.state import ResearchState
 
 _SYSTEM = """\
@@ -46,7 +44,7 @@ def run(state: ResearchState) -> dict[str, object]:
         messages=[{"role": "user", "content": prompt}],
     )
 
-    clusters: list[list[str]] = json.loads(message.content[0].text)
+    clusters: list[list[str]] = parse_json_response(message)  # type: ignore[assignment]
 
     # Validate: ensure all IDs are accounted for
     all_ids = {h["id"] for h in pool}
