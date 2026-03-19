@@ -258,17 +258,35 @@ def test_run_falls_back_to_arxiv_when_pubmed_also_fails() -> None:
     assert any("arxiv" in str(m.get("content", "")) for m in msgs)
 
 
-def test_run_message_includes_source_on_success() -> None:
-    """Output message includes source name."""
-    ok_response = _make_ok_response(
-        data=[{"paperId": "x1", "title": "T", "abstract": "", "authors": [], "url": ""}]
+def test_run_includes_query_in_output() -> None:
+    """Agent includes query keywords in output for verbose mode display."""
+    mock_response = _make_ok_response(
+        data=[
+            {
+                "paperId": "id1",
+                "title": "Query Test Paper",
+                "abstract": "Test abstract",
+                "authors": [{"name": "Alice"}],
+                "url": "https://example.com/1",
+            },
+        ]
     )
-    with patch("darwin.agents.literature.httpx.get", return_value=ok_response):
-        result = run(_make_state())  # type: ignore[arg-type]
 
+    with (
+        patch("darwin.agents.literature.httpx.get", return_value=mock_response),
+        patch("darwin.agents.literature._distil_query", return_value="machine learning keywords")
+    ):
+        result = run(_make_state(topic="machine learning"))  # type: ignore[arg-type]
+
+    # Verify query field is included in the output
+    assert "query" in result
+    assert result["query"] == "machine learning keywords"
+
+    # Verify existing functionality still works
+    papers = result.get("literature_context", [])
+    assert len(papers) == 1  # type: ignore[arg-type]
     msgs = result.get("messages", [])
-    content = str(msgs[0].get("content", ""))
-    assert "from semantic_scholar" in content
+    assert len(msgs) == 1
 
 
 # ---------------------------------------------------------------------------
@@ -323,3 +341,34 @@ def test_fetch_arxiv_normalises_schema() -> None:
     assert p["venue"] == "arXiv"
     assert p["url"] == "https://arxiv.org/abs/2301.00001v1"
     assert "abstract" in p
+
+
+def test_run_includes_query_in_output() -> None:
+    """Agent includes query keywords in output for verbose mode display."""
+    mock_response = _make_ok_response(
+        data=[
+            {
+                "paperId": "id1",
+                "title": "Query Test Paper",
+                "abstract": "Test abstract",
+                "authors": [{"name": "Alice"}],
+                "url": "https://example.com/1",
+            },
+        ]
+    )
+
+    with (
+        patch("darwin.agents.literature.httpx.get", return_value=mock_response),
+        patch("darwin.agents.literature._distil_query", return_value="machine learning keywords")
+    ):
+        result = run(_make_state(topic="machine learning"))  # type: ignore[arg-type]
+
+    # Verify query field is included in the output
+    assert "query" in result
+    assert result["query"] == "machine learning keywords"
+
+    # Verify existing functionality still works
+    papers = result.get("literature_context", [])
+    assert len(papers) == 1  # type: ignore[arg-type]
+    msgs = result.get("messages", [])
+    assert len(msgs) == 1

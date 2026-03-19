@@ -48,6 +48,12 @@ def _print_verbose_output(node_name: str, update: dict[str, object]) -> None:
 
     if node_name == "literature":
         papers: list[dict[str, object]] = update.get("literature_context") or []  # type: ignore[assignment]
+        query: str = str(update.get("query", ""))
+
+        # Show search keywords prominently in verbose mode
+        if query:
+            console.print(f"    [bold]Searching literature with keywords:[/bold] [cyan]{query}[/cyan]")
+
         if papers:
             console.print(f"    [dim]fetched {len(papers)} papers[/dim]")
             for p in papers[:3]:

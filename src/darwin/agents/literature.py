@@ -269,6 +269,7 @@ def run(state: ResearchState) -> dict[str, object]:
     error_suffix = f"; error: {error_note}" if error_note else ""
     return {
         "literature_context": papers,
+        "query": query,
         "messages": [
             {
                 "role": "agent",
