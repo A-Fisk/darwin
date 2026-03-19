@@ -50,11 +50,9 @@ def _print_verbose_output(node_name: str, update: dict[str, object]) -> None:
         papers: list[dict[str, object]] = update.get("literature_context") or []  # type: ignore[assignment]
         if papers:
             console.print(f"    [dim]fetched {len(papers)} papers[/dim]")
-            for p in papers[:3]:
+            for p in papers:
                 title = escape(str(p.get("title", "")))
                 console.print(f"    [yellow]•[/yellow] {title}")
-            if len(papers) > 3:
-                console.print(f"    [dim]... and {len(papers) - 3} more[/dim]")
         else:
             msgs: list[dict[str, object]] = update.get("messages") or []  # type: ignore[assignment]
             content = msgs[0]["content"] if msgs else "no papers fetched"
