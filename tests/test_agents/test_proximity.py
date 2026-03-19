@@ -96,6 +96,21 @@ class TestProximityRun:
             with pytest.raises(json.JSONDecodeError):
                 proximity.run(_make_state(hypotheses=hyps))
 
+    def test_json_with_extra_data_parsed(self) -> None:
+        """LLM response with valid JSON followed by extra text should parse successfully."""
+        hyps = [_hyp("a"), _hyp("b")]
+        # Valid JSON followed by extra text (simulates the "Extra data" error scenario)
+        payload = '[["a"], ["b"]] This is some extra text after the JSON.'
+        with patch("darwin.agents.proximity.anthropic.Anthropic") as MockClient:
+            MockClient.return_value.messages.create.return_value = _mock_message(payload)
+            result = proximity.run(_make_state(hypotheses=hyps))
+
+        # Should successfully parse the JSON part and ignore extra text
+        clusters = result["proximity_clusters"]  # type: ignore[union-attr]
+        assert clusters == [["a"], ["b"]]
+        all_ids = {hid for cluster in clusters for hid in cluster}
+        assert all_ids == {"a", "b"}
+
     def test_deduplication_via_latest_hypotheses(self) -> None:
         """Latest version of duplicate IDs should be used."""
         hyp_v1 = Hypothesis(id="dup", text="v1", score=0.3,

@@ -46,7 +46,23 @@ def parse_json_response(
             f"Response length: {len(text)} chars. Increase max_tokens for this agent."
         )
 
-    return json.loads(text)
+    # Handle cases where LLM response contains valid JSON followed by additional text
+    # json.loads() would raise "Extra data" error, so use JSONDecoder to parse first valid JSON
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        if "Extra data" in str(e):
+            # Try to parse just the first valid JSON object
+            decoder = json.JSONDecoder()
+            try:
+                obj, idx = decoder.raw_decode(text)
+                return obj
+            except json.JSONDecodeError:
+                # If raw_decode also fails, re-raise the original error
+                raise e
+        else:
+            # Re-raise other JSON errors (malformed JSON, etc.)
+            raise
 
 
 def latest_hypotheses(hypotheses: list[Hypothesis]) -> list[Hypothesis]:
