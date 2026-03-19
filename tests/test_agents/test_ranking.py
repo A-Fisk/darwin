@@ -138,12 +138,35 @@ class TestRankingRun:
         for h in result["hypotheses"]:  # type: ignore[union-attr]
             assert 0.0 <= h["score"] <= 1.0
 
-    def test_malformed_json_raises(self) -> None:
+    def test_malformed_json_handled_gracefully(self) -> None:
+        """Malformed JSON should be handled gracefully, not crash."""
         hyps = [_hyp("a"), _hyp("b")]
         with patch("darwin.agents.ranking.anthropic.Anthropic") as MockClient:
             MockClient.return_value.messages.create.return_value = _mock_message("bad json")
-            with pytest.raises(json.JSONDecodeError):
-                ranking.run(_make_state(hypotheses=hyps))
+            # Should not raise; handled gracefully with fallback behavior
+            result = ranking.run(_make_state(hypotheses=hyps))
+
+            # Should still return valid structure
+            assert "ranked_ids" in result
+            assert "top_hypotheses" in result
+            assert len(result["ranked_ids"]) == 2
+
+    def test_malformed_property_names_handled(self) -> None:
+        """JSON with unquoted property names should be handled gracefully."""
+        hyps = [_hyp("a"), _hyp("b")]
+        # Simulate the specific error mentioned in the issue - unquoted property names
+        malformed_json = '{winner: "a"}'  # Missing quotes around property name
+        with patch("darwin.agents.ranking.anthropic.Anthropic") as MockClient:
+            MockClient.return_value.messages.create.return_value = _mock_message(malformed_json)
+            # Should not crash, should handle gracefully
+            result = ranking.run(_make_state(hypotheses=hyps))
+
+            # Should complete successfully with fallback behavior
+            assert "ranked_ids" in result
+            assert len(result["ranked_ids"]) == 2
+            # With malformed JSON falling back to "draw", scores should be roughly equal
+            scores = {h["id"]: h["score"] for h in result["hypotheses"]}  # type: ignore[union-attr]
+            assert abs(scores["a"] - scores["b"]) < 0.1  # Nearly equal due to draw fallback
 
     def test_invalid_winner_treated_as_draw(self) -> None:
         """Unknown winner value defaults to draw — should not raise."""

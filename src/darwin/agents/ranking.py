@@ -1,7 +1,10 @@
 """Ranking agent — Optimized Elo tournament with batching and smart structures."""
 from __future__ import annotations
 
+import json
 import math
+import random
+import time
 from concurrent.futures import ThreadPoolExecutor
 from itertools import combinations
 from typing import Any
@@ -15,6 +18,10 @@ from darwin.config import TOP_N_HYPOTHESES
 from darwin.state import Hypothesis, ResearchState
 
 _K = 32.0
+
+# Retry configuration for handling LLM JSON errors
+_MAX_RETRIES = 3
+_BASE_DELAY = 0.5  # seconds, shorter than literature agent since this is lighter
 
 # Optimization thresholds
 _BATCH_COMPARISON_THRESHOLD = 15  # Use batch comparisons when n >= 15
@@ -74,7 +81,11 @@ def _batch_compare_hypotheses(
     criteria_block: str,
     lit_index: dict[str, str]
 ) -> dict[str, float]:
-    """Compare a small batch of hypotheses and return relative strengths."""
+    """Compare a small batch of hypotheses and return relative strengths.
+
+    Retries on malformed JSON responses with improved prompting.
+    Falls back to equal scores if all retries fail.
+    """
     if len(batch) <= 1:
         return {batch[0]["id"]: 0.5} if batch else {}
 
@@ -91,34 +102,65 @@ def _batch_compare_hypotheses(
     ])
 
     prompt = f"Topic: {topic}\n\n{hyp_text}"
-    system = _SYSTEM_BATCH.format(n=len(batch), criteria=criteria_block)
+    base_system = _SYSTEM_BATCH.format(n=len(batch), criteria=criteria_block)
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=512,
-        system=system,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    for attempt in range(_MAX_RETRIES + 1):
+        # Add extra JSON formatting emphasis on retry attempts
+        if attempt == 0:
+            system = base_system
+        elif attempt == 1:
+            system = base_system + "\n\nIMPORTANT: Ensure all JSON property names are enclosed in double quotes."
+        else:
+            system = (base_system +
+                     "\n\nCRITICAL: Output must be valid JSON. Example: {\"ranking\": [\"a\", \"b\", \"c\"]}\n"
+                     "Property names MUST be in double quotes. No comments, no extra text.")
 
-    result: dict[str, list[str]] = parse_json_response(message, "{")  # type: ignore[assignment]
-    ranking = result.get("ranking", labels)  # fallback to original order
+        try:
+            message = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=512,
+                system=system,
+                messages=[{"role": "user", "content": prompt}],
+            )
 
-    # Convert ranking positions to relative strengths (0.0-1.0)
-    strengths: dict[str, float] = {}
-    n = len(ranking)
-    for pos, label in enumerate(ranking):
-        if pos < len(batch):
-            idx = ord(label.lower()) - ord('a')
-            if 0 <= idx < len(batch):
-                # Higher position = higher strength (reverse of position index)
-                strengths[batch[idx]["id"]] = 1.0 - (pos / max(1, n - 1))
+            result: dict[str, list[str]] = parse_json_response(message, "{")  # type: ignore[assignment]
+            ranking = result.get("ranking", labels)  # fallback to original order
 
-    # Ensure all hypotheses have a strength value
-    for h in batch:
-        if h["id"] not in strengths:
-            strengths[h["id"]] = 0.5  # neutral fallback
+            # Convert ranking positions to relative strengths (0.0-1.0)
+            strengths: dict[str, float] = {}
+            n = len(ranking)
+            for pos, label in enumerate(ranking):
+                if pos < len(batch):
+                    idx = ord(label.lower()) - ord('a')
+                    if 0 <= idx < len(batch):
+                        # Higher position = higher strength (reverse of position index)
+                        strengths[batch[idx]["id"]] = 1.0 - (pos / max(1, n - 1))
 
-    return strengths
+            # Ensure all hypotheses have a strength value
+            for h in batch:
+                if h["id"] not in strengths:
+                    strengths[h["id"]] = 0.5  # neutral fallback
+
+            return strengths
+
+        except json.JSONDecodeError as e:
+            # Handle malformed JSON similar to pairwise comparison
+            if "property name" in str(e).lower() or "expecting" in str(e).lower():
+                if attempt < _MAX_RETRIES:
+                    delay = _BASE_DELAY * (2**attempt) + random.uniform(0, 0.1)
+                    time.sleep(delay)
+                    continue
+            if attempt >= _MAX_RETRIES:
+                # Fallback: assign equal strengths to all hypotheses
+                return {h["id"]: 0.5 for h in batch}
+            else:
+                continue
+        except Exception:
+            # For non-JSON errors, re-raise immediately
+            raise
+
+    # Fallback if all attempts failed (should not reach here, but safety net)
+    return {h["id"]: 0.5 for h in batch}
 
 
 def _pairwise_compare(
@@ -129,7 +171,11 @@ def _pairwise_compare(
     criteria_block: str,
     lit_index: dict[str, str]
 ) -> str:
-    """Compare two hypotheses and return winner ('a', 'b', or 'draw')."""
+    """Compare two hypotheses and return winner ('a', 'b', or 'draw').
+
+    Retries on malformed JSON responses with improved prompting.
+    Falls back to 'draw' if all retries fail.
+    """
     def refs_note(h: Hypothesis) -> str:
         refs = h.get("references", [])
         titles = [lit_index[r] for r in refs if r in lit_index]
@@ -141,17 +187,52 @@ def _pairwise_compare(
         f"Hypothesis B: {hb['text']}{refs_note(hb)}"
     )
 
-    system = _SYSTEM_PAIRWISE.format(criteria=criteria_block)
+    base_system = _SYSTEM_PAIRWISE.format(criteria=criteria_block)
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=512,
-        system=system,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    for attempt in range(_MAX_RETRIES + 1):
+        # Add extra JSON formatting emphasis on retry attempts
+        if attempt == 0:
+            system = base_system
+        elif attempt == 1:
+            system = base_system + "\n\nIMPORTANT: Ensure all JSON property names are enclosed in double quotes."
+        else:
+            system = (base_system +
+                     "\n\nCRITICAL: Output must be valid JSON. Example: {\"winner\": \"a\"}\n"
+                     "Property names MUST be in double quotes. No comments, no extra text.")
 
-    result: dict[str, str] = parse_json_response(message, "{")  # type: ignore[assignment]
-    return result.get("winner", "draw")
+        try:
+            message = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=512,
+                system=system,
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            result: dict[str, str] = parse_json_response(message, "{")  # type: ignore[assignment]
+            return result.get("winner", "draw")
+
+        except json.JSONDecodeError as e:
+            # Log the specific JSON error for debugging
+            if "property name" in str(e).lower() or "expecting" in str(e).lower():
+                # This is the specific malformed JSON issue we're trying to fix
+                if attempt < _MAX_RETRIES:
+                    # Add exponential backoff with jitter (similar to literature agent)
+                    delay = _BASE_DELAY * (2**attempt) + random.uniform(0, 0.1)
+                    time.sleep(delay)
+                    continue
+            # If it's a different JSON error or we've exhausted retries, re-raise
+            if attempt >= _MAX_RETRIES:
+                # Log the failure but don't crash - fall back to draw
+                return "draw"
+            else:
+                # For other JSON errors, retry immediately
+                continue
+        except Exception:
+            # For non-JSON errors (network, API), re-raise immediately
+            raise
+
+    # Fallback if all attempts failed
+    return "draw"
 
 
 def _swiss_tournament(
