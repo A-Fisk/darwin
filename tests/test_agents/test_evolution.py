@@ -37,8 +37,8 @@ def _hyp(id: str = "aaa", score: float = 0.8) -> Hypothesis:
 def _mock_message(text: str) -> MagicMock:
     msg = MagicMock()
     msg.stop_reason = "end_turn"
-    # Agents use assistant prefill, so the model returns text AFTER the first character
-    msg.content = [MagicMock(type="text", text=text[1:] if text else text)]
+    # Evolution agent doesn't use assistant prefill, so return full text
+    msg.content = [MagicMock(type="text", text=text)]
     return msg
 
 

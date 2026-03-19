@@ -38,7 +38,7 @@ def _hyp(id: str, score: float = 0.5, generation: int = 1) -> Hypothesis:
 def _mock_message(text: str) -> MagicMock:
     msg = MagicMock()
     msg.stop_reason = "end_turn"
-    # Agents use assistant prefill, so the model returns text AFTER the first character
+    # Ranking agent uses prefill "{", so Claude response doesn't include the opening brace
     msg.content = [MagicMock(type="text", text=text[1:] if text else text)]
     return msg
 
