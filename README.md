@@ -18,7 +18,7 @@ darwin orchestrates a graph of nine agents that iterate over a hypothesis pool:
 | **Literature** | Fetches relevant papers from Semantic Scholar to ground hypothesis generation |
 | **Generation** | Produces 5 new hypotheses per iteration, citing supporting papers |
 | **Reflection** | Critiques each hypothesis using configurable criteria and assigns a score (0–1) |
-| **Ranking** | Runs an Elo pairwise tournament; literature-grounded hypotheses get a boost |
+| **Ranking** | Runs an optimized Elo tournament system; literature-grounded hypotheses get a boost |
 | **Proximity** | Clusters hypotheses by semantic similarity to surface thematic groups |
 | **Evolution** | Mutates and combines top hypotheses into refined candidates |
 | **Meta-review** | Cross-iteration quality audit; decides whether to continue, stop, or escalate to human |
@@ -62,6 +62,8 @@ uv run darwin "<research question>"
 | `--iterations N` | `5` | Maximum number of research iterations |
 | `--output-dir DIR` | _(none)_ | Write `hypotheses.tex` and `references.bib` to DIR on completion |
 
+**Customization**: To modify ranking criteria or algorithm settings, see the [Ranking Algorithm](#ranking-algorithm) section below.
+
 **Examples:**
 
 ```bash
@@ -84,7 +86,7 @@ uv run darwin "Novel mechanisms for carbon capture" --output-dir ./results
 3. **Generation** produces 5 new hypotheses grounded in the retrieved papers; each cites which papers it builds on.
 4. **Evolution** adds 3 more hypotheses by mutating top candidates from the prior round.
 5. **Reflection** critiques every new hypothesis against configurable criteria (see `criteria.toml`) and scores it (0–1).
-6. **Ranking** runs an Elo tournament; literature-backed hypotheses gain an advantage when otherwise equal.
+6. **Ranking** runs an optimized tournament system with literature preference (see [Ranking Algorithm](#ranking-algorithm) below).
 7. **Proximity** clusters the top pool by semantic theme.
 8. **Meta-review** audits progress across iterations and issues a decision:
    - `continue` — keep iterating
@@ -97,21 +99,108 @@ uv run darwin "Novel mechanisms for carbon capture" --output-dir ./results
 
 ## Configuring evaluation criteria
 
-Evaluation criteria are defined in `src/darwin/criteria.toml`. Edit the file to tune what the system values without touching agent code:
+Evaluation criteria are defined in `src/darwin/criteria.toml`. Edit this file to tune what the system values without touching agent code.
+
+**Current criteria** (used by both **Reflection** and **Ranking** agents):
 
 ```toml
 [[criteria]]
 name = "novelty"
-description = "The hypothesis proposes something genuinely new..."
+description = "The hypothesis proposes something genuinely new, not merely restating known results."
+weight = 1.0
+
+[[criteria]]
+name = "testability"
+description = "The hypothesis can be empirically tested or falsified with concrete experiments."
+weight = 1.0
+
+[[criteria]]
+name = "specificity"
+description = "The hypothesis is precise and makes clear, unambiguous predictions."
+weight = 1.0
+
+[[criteria]]
+name = "scientific_merit"
+description = "The hypothesis is scientifically plausible, internally consistent, and grounded in domain knowledge."
 weight = 1.0
 
 [[criteria]]
 name = "literature_support"
-description = "The hypothesis builds on or extends the retrieved literature..."
+description = "The hypothesis builds on, extends, challenges, or synthesises from the retrieved literature in a meaningful way."
 weight = 0.8
 ```
 
-Each criterion has a `name`, `description` (shown to the LLM judge), and `weight` (relative importance; normalised at runtime).
+Each criterion has a `name`, `description` (shown to the LLM judge), and `weight` (relative importance; normalized at runtime). Higher weights increase a criterion's influence on the final scores.
+
+---
+
+## Ranking Algorithm
+
+The **Ranking** agent uses an optimized Elo tournament system to produce a total ordering of hypotheses. The algorithm adapts its strategy based on the number of hypotheses to balance accuracy and efficiency.
+
+### How Rankings Are Determined
+
+1. **Evaluation Criteria**: Each hypothesis is judged using the criteria defined in `criteria.toml`:
+   - **novelty** (weight 1.0): Proposes something genuinely new vs. restating known results
+   - **testability** (weight 1.0): Can be empirically tested or falsified with concrete experiments
+   - **specificity** (weight 1.0): Makes precise, unambiguous predictions
+   - **scientific_merit** (weight 1.0): Scientifically plausible, internally consistent, grounded in domain knowledge
+   - **literature_support** (weight 0.8): Builds on, extends, or synthesizes from retrieved literature
+
+2. **Literature Preference**: When all other criteria are equal, hypotheses that cite and meaningfully extend the retrieved literature receive preference over those that don't.
+
+3. **Elo Tournament System**: Uses K=32 Elo rating updates where:
+   - Winners gain rating points, losers lose them
+   - The amount depends on the rating difference (upset victories gain more points)
+   - Final ratings are normalized to 0.0–1.0 scores
+
+### Adaptive Ranking Strategies
+
+The system automatically chooses the most efficient ranking approach based on pool size:
+
+| Pool Size | Strategy | Comparisons | Details |
+|-----------|----------|-------------|---------|
+| **Small (< 15)** | Pairwise Tournament | O(n²) | Direct comparison of every hypothesis pair |
+| **Medium (15–24)** | Batch Comparisons | ~n×4 | Groups of 4 hypotheses ranked together |
+| **Large (≥ 25)** | Swiss Tournament | ~n×log₂(n) | Smart pairing across log₂(n) rounds |
+
+**Example**: For 8 hypotheses, the system runs 28 pairwise comparisons. For 30 hypotheses, it runs ~5 Swiss tournament rounds with smart opponent pairing.
+
+### Top Selection
+
+After ranking, the system selects the top N hypotheses (default: 3) to feed into the **Evolution** agent for the next iteration. This creates a selective pressure that improves hypothesis quality over time.
+
+### Customization Options
+
+**Evaluation Criteria** (modify `src/darwin/criteria.toml`):
+```toml
+[[criteria]]
+name = "your_criterion"
+description = "What you want to evaluate..."
+weight = 1.2  # Adjust relative importance
+```
+
+**Pool Size** (modify `src/darwin/config.py`):
+```python
+TOP_N_HYPOTHESES: int = 5  # Default: 3
+```
+
+**Advanced Configuration** (modify thresholds in `src/darwin/agents/ranking.py`):
+```python
+_BATCH_COMPARISON_THRESHOLD = 15    # When to switch from pairwise
+_SWISS_TOURNAMENT_THRESHOLD = 25    # When to switch to Swiss system
+_MAX_BATCH_SIZE = 4                 # Hypotheses per batch comparison
+```
+
+### Example Ranking Output
+
+```
+Ranked 12 hypotheses via batch comparisons (16 comparisons vs 66 full pairwise)
+Top hypotheses:
+1. (score: 0.91) Horizontal gene transfer via conjugative plasmids...
+2. (score: 0.87) Biofilm formation on medical devices creates...
+3. (score: 0.83) Sub-therapeutic antibiotic concentrations in ICUs...
+```
 
 ---
 
