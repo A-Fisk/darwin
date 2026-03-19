@@ -16,6 +16,7 @@ def _make_hypothesis(
     score: float = 0.75,
     generation: int = 1,
     evolved_from: str | None = None,
+    references: list[str] | None = None,
 ) -> Hypothesis:
     return Hypothesis(
         id=id,
@@ -24,6 +25,7 @@ def _make_hypothesis(
         reflections=[],
         generation=generation,
         evolved_from=evolved_from,
+        references=references or [],
     )
 
 
@@ -98,7 +100,7 @@ class TestDisplayFinalResults:
         con = Console(file=buf, no_color=True)
         hyps = [_make_hypothesis(text="Top hypothesis", score=0.9)]
         with patch("darwin.review.console", con):
-            display_final_results(hyps, meta_review_notes="Good results", topic="cancer")
+            display_final_results(hyps, meta_review_notes="Good results", topic="cancer", literature_context=None)
         output = buf.getvalue()
         assert "Top hypothesis" in output
         assert "0.9000" in output
@@ -108,5 +110,46 @@ class TestDisplayFinalResults:
         buf = StringIO()
         con = Console(file=buf, no_color=True)
         with patch("darwin.review.console", con):
-            display_final_results([], meta_review_notes="", topic="test")
+            display_final_results([], meta_review_notes="", topic="test", literature_context=None)
         assert "No final hypotheses" in buf.getvalue()
+
+    def test_displays_numbered_references(self) -> None:
+        """Test that numbered references are added to hypotheses and reference list is shown."""
+        buf = StringIO()
+        con = Console(file=buf, no_color=True)
+
+        # Create hypothesis with references
+        hyps = [_make_hypothesis(
+            text="Sleep spindles correlate with memory",
+            references=["paper1", "paper2"]
+        )]
+
+        # Create literature context
+        literature_context = [
+            {
+                "paper_id": "paper1",
+                "title": "Sleep Spindles in Memory Formation",
+                "authors": "Smith et al.",
+                "year": "2023",
+                "venue": "Nature Neuroscience"
+            },
+            {
+                "paper_id": "paper2",
+                "title": "Memory Consolidation During Sleep",
+                "authors": "Johnson and Brown",
+                "year": "2022",
+                "venue": "Journal of Sleep Research"
+            }
+        ]
+
+        with patch("darwin.review.console", con):
+            display_final_results(hyps, meta_review_notes="", topic="sleep", literature_context=literature_context)
+
+        output = buf.getvalue()
+        # Check that hypothesis has numbered references
+        assert "Sleep spindles correlate with memory [1,2]" in output
+        # Check that reference list is displayed
+        assert "[1] Smith et al. (2023). Sleep Spindles in Memory Formation." in output
+        assert "Nature" in output and "Neuroscience" in output
+        assert "[2] Johnson and Brown (2022). Memory Consolidation During Sleep." in output
+        assert "Journal of" in output and "Sleep Research" in output

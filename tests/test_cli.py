@@ -64,6 +64,29 @@ class TestPrintVerboseOutput:
         out = capsys.readouterr().out
         assert "Research is progressing well." in out
 
+    def test_literature_prints_all_papers(self, capsys) -> None:
+        """Literature verbose output should show all papers, not just first 3."""
+        papers = [
+            {"title": "Paper 1", "abstract": "Abstract 1"},
+            {"title": "Paper 2", "abstract": "Abstract 2"},
+            {"title": "Paper 3", "abstract": "Abstract 3"},
+            {"title": "Paper 4", "abstract": "Abstract 4"},
+            {"title": "Paper 5", "abstract": "Abstract 5"},
+        ]
+        update = {"literature_context": papers}
+        _print_verbose_output("literature", update)
+        out = capsys.readouterr().out
+
+        # Should show count and all paper titles
+        assert "fetched 5 papers" in out
+        assert "Paper 1" in out
+        assert "Paper 2" in out
+        assert "Paper 3" in out
+        assert "Paper 4" in out
+        assert "Paper 5" in out
+        # Should NOT show "... and X more" message
+        assert "more" not in out
+
     def test_supervisor_prints_decision(self, capsys) -> None:
         update = {"supervisor_decision": "continue"}
         _print_verbose_output("supervisor", update)
@@ -220,7 +243,11 @@ class TestMainVerboseArg:
 class TestMainOutputDirArg:
     def _run_main(self, argv: list[str], state_values: dict | None = None) -> MagicMock:
         if state_values is None:
-            state_values = {"final_hypotheses": [], "meta_review_notes": "", "literature_context": []}
+            state_values = {
+                "final_hypotheses": [],
+                "meta_review_notes": "",
+                "literature_context": []
+            }
         with patch("sys.argv", argv):
             with patch("darwin.cli._stream_with_progress"):
                 with patch("darwin.graph.build_graph") as mock_build:
