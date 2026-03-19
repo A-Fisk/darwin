@@ -40,7 +40,8 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 
 def run(state: ResearchState) -> dict[str, object]:
     """Generate NEW_PER_ITERATION new hypotheses for the current iteration."""
-    client = anthropic.Anthropic()
+    # Add timeout to prevent hanging on API calls
+    client = anthropic.Anthropic(timeout=60.0)  # 60 second timeout
 
     existing = latest_hypotheses(state["hypotheses"])
     context = ""
