@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from darwin.agents._common import criteria_prompt_block, parse_json_response
+from darwin.config import MAX_TOKENS_DETAILED
 from darwin.state import Hypothesis, ResearchState
 
 _SYSTEM = """\
@@ -81,7 +82,7 @@ def run(state: ResearchState) -> dict[str, object]:
             prompt = f"Topic: {state['topic']}\nHypothesis: {hyp['text']}{lit_note}"
             message = client.messages.create(
                 model="claude-sonnet-4-6",
-                max_tokens=512,
+                max_tokens=MAX_TOKENS_DETAILED,
                 system=system,
                 messages=[
                     {"role": "user", "content": prompt},

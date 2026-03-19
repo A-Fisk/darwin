@@ -7,7 +7,7 @@ from typing import Literal
 import anthropic
 
 from darwin.agents._common import latest_hypotheses, parse_json_response
-from darwin.config import TOP_N_HYPOTHESES
+from darwin.config import TOP_N_HYPOTHESES, MAX_TOKENS_SIMPLE
 from darwin.state import ResearchState
 
 _SYSTEM = """\
@@ -59,7 +59,7 @@ def run(state: ResearchState) -> dict[str, object]:
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=256,
+        max_tokens=MAX_TOKENS_SIMPLE,
         system=_SYSTEM,
         messages=[
             {"role": "user", "content": prompt},

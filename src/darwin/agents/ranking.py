@@ -14,7 +14,7 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from darwin.agents._common import criteria_prompt_block, latest_hypotheses, parse_json_response
-from darwin.config import TOP_N_HYPOTHESES
+from darwin.config import TOP_N_HYPOTHESES, MAX_TOKENS_COMPLEX
 from darwin.state import Hypothesis, ResearchState
 
 _K = 32.0
@@ -118,7 +118,7 @@ def _batch_compare_hypotheses(
         try:
             message = client.messages.create(
                 model="claude-sonnet-4-6",
-                max_tokens=512,
+                max_tokens=MAX_TOKENS_COMPLEX,
                 system=system,
                 messages=[{"role": "user", "content": prompt}],
             )
@@ -203,7 +203,7 @@ def _pairwise_compare(
         try:
             message = client.messages.create(
                 model="claude-sonnet-4-6",
-                max_tokens=512,
+                max_tokens=MAX_TOKENS_COMPLEX,
                 system=system,
                 messages=[{"role": "user", "content": prompt}],
             )

@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import anthropic
 import httpx
 
+from darwin.config import MAX_TOKENS_SIMPLE
 from darwin.state import ResearchState
 
 _SEMANTIC_SCHOLAR_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
@@ -25,7 +26,7 @@ def _distil_query(topic: str) -> str:
     client = anthropic.Anthropic()
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=64,
+        max_tokens=MAX_TOKENS_SIMPLE,
         messages=[
             {
                 "role": "user",

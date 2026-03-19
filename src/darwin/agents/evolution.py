@@ -7,7 +7,7 @@ import anthropic
 from rich.console import Console
 
 from darwin.agents._common import parse_json_response
-from darwin.config import EVOLVED_PER_ITERATION
+from darwin.config import EVOLVED_PER_ITERATION, MAX_TOKENS_CREATIVE
 from darwin.state import Hypothesis, ResearchState
 
 _SYSTEM = """\
@@ -51,7 +51,7 @@ def run(state: ResearchState) -> dict[str, object]:
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=4096,
+        max_tokens=MAX_TOKENS_CREATIVE,
         system=_SYSTEM.format(n=EVOLVED_PER_ITERATION),
         messages=[
             {"role": "user", "content": prompt},

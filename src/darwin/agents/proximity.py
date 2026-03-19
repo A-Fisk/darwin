@@ -5,6 +5,7 @@ import anthropic
 from rich.console import Console
 
 from darwin.agents._common import latest_hypotheses, parse_json_response
+from darwin.config import MAX_TOKENS_DETAILED
 from darwin.state import ResearchState
 
 _SYSTEM = """\
@@ -45,7 +46,7 @@ def run(state: ResearchState) -> dict[str, object]:
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=512,
+        max_tokens=MAX_TOKENS_DETAILED,
         system=_SYSTEM,
         messages=[
             {"role": "user", "content": prompt},
