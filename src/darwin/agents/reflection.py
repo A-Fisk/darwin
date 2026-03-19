@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import anthropic
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from darwin.agents._common import criteria_prompt_block, parse_json_response
 from darwin.state import Hypothesis, ResearchState
@@ -50,38 +52,53 @@ def run(state: ResearchState) -> dict[str, object]:
             lit_index[pid] = p.get("title", "")
 
     updated: list[Hypothesis] = []
-    for hyp in current:
-        lit_note = ""
-        if lit_index:
-            cited_titles = [
-                lit_index[ref] for ref in hyp.get("references", []) if ref in lit_index
-            ]
-            if cited_titles:
-                lit_note = f"\nCited papers: {'; '.join(cited_titles)}"
-            else:
-                lit_note = "\nNo papers cited."
+    console = Console()
 
-        prompt = f"Topic: {state['topic']}\nHypothesis: {hyp['text']}{lit_note}"
-        message = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=512,
-            system=system,
-            messages=[
-                {"role": "user", "content": prompt},
-            ],
-        )
-        result: dict[str, object] = parse_json_response(message)  # type: ignore[assignment]
-        updated.append(
-            Hypothesis(
-                id=hyp["id"],
-                text=hyp["text"],
-                score=float(result.get("score", 0.5)),  # type: ignore[arg-type]
-                reflections=hyp["reflections"] + [str(result.get("critique", ""))],
-                generation=hyp["generation"],
-                evolved_from=hyp["evolved_from"],
-                references=hyp.get("references", []),
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        console=console,
+        transient=True,
+    ) as progress:
+        task = progress.add_task(f"[cyan]Reflecting on {len(current)} hypotheses", total=len(current))
+
+        for i, hyp in enumerate(current):
+            # Update progress bar with current hypothesis
+            progress.update(task, advance=1, description=f"[cyan]Critiquing hypothesis {hyp['id'][:4]} ({i+1}/{len(current)})")
+
+            lit_note = ""
+            if lit_index:
+                cited_titles = [
+                    lit_index[ref] for ref in hyp.get("references", []) if ref in lit_index
+                ]
+                if cited_titles:
+                    lit_note = f"\nCited papers: {'; '.join(cited_titles)}"
+                else:
+                    lit_note = "\nNo papers cited."
+
+            prompt = f"Topic: {state['topic']}\nHypothesis: {hyp['text']}{lit_note}"
+            message = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=512,
+                system=system,
+                messages=[
+                    {"role": "user", "content": prompt},
+                ],
             )
-        )
+            result: dict[str, object] = parse_json_response(message)  # type: ignore[assignment]
+            updated.append(
+                Hypothesis(
+                    id=hyp["id"],
+                    text=hyp["text"],
+                    score=float(result.get("score", 0.5)),  # type: ignore[arg-type]
+                    reflections=hyp["reflections"] + [str(result.get("critique", ""))],
+                    generation=hyp["generation"],
+                    evolved_from=hyp["evolved_from"],
+                    references=hyp.get("references", []),
+                )
+            )
 
     # Append updated versions — downstream agents use latest_hypotheses() to deduplicate
     return {

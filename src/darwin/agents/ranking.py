@@ -7,6 +7,8 @@ from itertools import combinations
 from typing import Any
 
 import anthropic
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from darwin.agents._common import criteria_prompt_block, latest_hypotheses, parse_json_response
 from darwin.config import TOP_N_HYPOTHESES
@@ -303,11 +305,26 @@ def run(state: ResearchState) -> dict[str, object]:
         ratings = {h["id"]: 800.0 + h["score"] * 400.0 for h in pool}
 
         pairs = list(combinations(pool, 2))
-        for ha, hb in pairs:
-            winner = _pairwise_compare(client, ha, hb, state["topic"], criteria_block, lit_index)
-            ratings[ha["id"]], ratings[hb["id"]] = _elo_update(
-                ratings[ha["id"]], ratings[hb["id"]], winner
-            )
+        console = Console()
+
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            console=console,
+            transient=True,
+        ) as progress:
+            task = progress.add_task(f"[cyan]Ranking {len(pool)} hypotheses", total=len(pairs))
+
+            for i, (ha, hb) in enumerate(pairs):
+                # Update progress bar with current comparison
+                progress.update(task, advance=1, description=f"[cyan]Comparing hypothesis {ha['id'][:4]} vs {hb['id'][:4]} ({i+1}/{len(pairs)})")
+
+                winner = _pairwise_compare(client, ha, hb, state["topic"], criteria_block, lit_index)
+                ratings[ha["id"]], ratings[hb["id"]] = _elo_update(
+                    ratings[ha["id"]], ratings[hb["id"]], winner
+                )
 
         strategy = f"pairwise tournament"
         comparisons = len(pairs)

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import anthropic
+from rich.console import Console
 
 from darwin.agents._common import latest_hypotheses, parse_json_response
 from darwin.state import ResearchState
@@ -20,6 +21,7 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 def run(state: ResearchState) -> dict[str, object]:
     """Cluster hypotheses by semantic similarity using the LLM."""
     client = anthropic.Anthropic()
+    console = Console()
 
     pool = latest_hypotheses(state["hypotheses"])
     if not pool:
@@ -29,6 +31,8 @@ def run(state: ResearchState) -> dict[str, object]:
                 {"role": "agent", "agent": "proximity", "content": "no hypotheses to cluster"}
             ],
         }
+
+    console.print(f"  [cyan]Clustering {len(pool)} hypotheses by semantic similarity...[/cyan]")
 
     hypotheses_text = "\n".join(
         f'ID: {h["id"]} — {h["text"]}' for h in pool
@@ -56,6 +60,8 @@ def run(state: ResearchState) -> dict[str, object]:
     unclustered = all_ids - clustered_ids
     if unclustered:
         clusters.append(list(unclustered))
+
+    console.print(f"  [green]✓[/green] Formed {len(clusters)} clusters")
 
     return {
         "proximity_clusters": clusters,
