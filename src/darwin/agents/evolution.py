@@ -37,8 +37,10 @@ def run(state: ResearchState) -> dict[str, object]:
             ],
         }
 
-    with progress_context(f"Evolving {EVOLVED_PER_ITERATION} hypotheses from {len(parents)} parents") as progress:
-        task = progress.add_task(f"[cyan]Evolving hypotheses", total=1)
+    with progress_context(
+        f"Evolving {EVOLVED_PER_ITERATION} hypotheses from {len(parents)} parents"
+    ) as progress:
+        task = progress.add_task("[cyan]Evolving hypotheses", total=1)
 
         parents_text = "\n".join(
             f'ID: {h["id"]} — {h["text"]}' for h in parents
@@ -49,7 +51,11 @@ def run(state: ResearchState) -> dict[str, object]:
             f"Generate {EVOLVED_PER_ITERATION} evolved hypotheses."
         )
 
-        progress.update(task, advance=0, description=f"[cyan]Requesting {EVOLVED_PER_ITERATION} evolved hypotheses from Claude...")
+        progress.update(
+            task,
+            advance=0,
+            description=f"[cyan]Requesting {EVOLVED_PER_ITERATION} evolved hypotheses...",
+        )
 
         message = client.messages.create(
             model="claude-sonnet-4-6",
@@ -60,7 +66,11 @@ def run(state: ResearchState) -> dict[str, object]:
             ],
         )
 
-        progress.update(task, advance=0.5, description=f"[cyan]Parsing response and creating evolved hypotheses...")
+        progress.update(
+            task,
+            advance=0.5,
+            description="[cyan]Parsing response and creating evolved hypotheses...",
+        )
 
         items: list[dict[str, str]] = parse_json_response(message)  # type: ignore[assignment]
 
@@ -70,7 +80,11 @@ def run(state: ResearchState) -> dict[str, object]:
 
         evolved: list[Hypothesis] = []
         for i, item in enumerate(items[:EVOLVED_PER_ITERATION], 1):
-            progress.update(task, advance=0, description=f"[cyan]Creating evolved hypothesis {i}/{EVOLVED_PER_ITERATION}...")
+            progress.update(
+                task,
+                advance=0,
+                description=f"[cyan]Creating evolved hypothesis {i}/{EVOLVED_PER_ITERATION}...",
+            )
             parent_id = item.get("parent_id")
             # Validate parent_id exists; fall back to first parent
             if parent_id not in parent_ids:
@@ -93,7 +107,9 @@ def run(state: ResearchState) -> dict[str, object]:
             if verbose_level >= 2:
                 print_safe(f"  [green]✓ E{i}:[/green] {hypothesis_text}")
 
-        progress.update(task, advance=0.5, description=f"[cyan]Generated {len(evolved)} evolved hypotheses!")
+        progress.update(
+            task, advance=0.5, description=f"[cyan]Generated {len(evolved)} evolved hypotheses!"
+        )
         progress.update(task, completed=1)
 
     print_safe(f"  [green]✓[/green] Generated {len(evolved)} evolved hypotheses")

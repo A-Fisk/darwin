@@ -6,7 +6,7 @@ import uuid
 import anthropic
 
 from darwin.agents._common import latest_hypotheses, parse_json_response
-from darwin.config import NEW_PER_ITERATION, MAX_TOKENS_CREATIVE
+from darwin.config import MAX_TOKENS_CREATIVE, NEW_PER_ITERATION
 from darwin.console import print_safe, progress_context
 from darwin.state import Hypothesis, ResearchState
 
@@ -53,7 +53,7 @@ def run(state: ResearchState) -> dict[str, object]:
 
     lit_context: list[dict[str, str]] = state.get("literature_context") or []
     with progress_context(f"Generating {NEW_PER_ITERATION} new hypotheses") as progress:
-        task = progress.add_task(f"[cyan]Generating hypotheses", total=1)
+        task = progress.add_task("[cyan]Generating hypotheses", total=1)
 
         if lit_context:
             lit_lines = []
@@ -83,7 +83,11 @@ def run(state: ResearchState) -> dict[str, object]:
                 f"Generate {NEW_PER_ITERATION} new, distinct hypotheses."
             )
 
-        progress.update(task, advance=0, description=f"[cyan]Requesting {NEW_PER_ITERATION} hypotheses from Claude...")
+        progress.update(
+            task,
+            advance=0,
+            description=f"[cyan]Requesting {NEW_PER_ITERATION} hypotheses from Claude...",
+        )
 
         message = client.messages.create(
             model="claude-sonnet-4-6",
@@ -94,7 +98,11 @@ def run(state: ResearchState) -> dict[str, object]:
             ],
         )
 
-        progress.update(task, advance=0.5, description=f"[cyan]Parsing response and creating hypothesis objects...")
+        progress.update(
+            task,
+            advance=0.5,
+            description="[cyan]Parsing response and creating hypothesis objects...",
+        )
 
         items: list[dict[str, object]] = parse_json_response(message)  # type: ignore[assignment]
 
@@ -102,7 +110,9 @@ def run(state: ResearchState) -> dict[str, object]:
         verbose_level = state.get("verbose_level", 0)
         new_hypotheses: list[Hypothesis] = []
         for i, item in enumerate(items[:NEW_PER_ITERATION], 1):
-            progress.update(task, advance=0, description=f"[cyan]Creating hypothesis {i}/{NEW_PER_ITERATION}...")
+            progress.update(
+                task, advance=0, description=f"[cyan]Creating hypothesis {i}/{NEW_PER_ITERATION}..."
+            )
             refs: list[str] = []
             raw_refs = item.get("references", [])
             if isinstance(raw_refs, list):
@@ -125,7 +135,9 @@ def run(state: ResearchState) -> dict[str, object]:
             if verbose_level >= 2:
                 print_safe(f"  [green]✓ H{i}:[/green] {hypothesis_text}")
 
-        progress.update(task, advance=0.5, description=f"[cyan]Generated {len(new_hypotheses)} hypotheses!")
+        progress.update(
+            task, advance=0.5, description=f"[cyan]Generated {len(new_hypotheses)} hypotheses!"
+        )
         progress.update(task, completed=1)
 
     print_safe(f"  [green]✓[/green] Generated {len(new_hypotheses)} hypotheses")

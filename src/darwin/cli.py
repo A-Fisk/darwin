@@ -195,7 +195,8 @@ def main() -> None:
         "--verbose", "-v",
         action="count",
         default=0,
-        help="Print each agent's raw output and execution timing as it completes. Use -vv for real-time hypothesis streaming",
+        help="Print each agent's raw output and execution timing as it completes. "
+        "Use -vv for real-time hypothesis streaming",
     )
     parser.add_argument(
         "--output-dir",
