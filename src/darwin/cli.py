@@ -202,6 +202,12 @@ def main() -> None:
         default=None,
         help="Write hypotheses.tex and references.bib to DIR on completion",
     )
+    parser.add_argument(
+        "--output-file",
+        metavar="FILE",
+        default=None,
+        help="Write human-readable text summary to FILE on completion",
+    )
     args = parser.parse_args()
 
     from langgraph.checkpoint.memory import MemorySaver
@@ -291,3 +297,16 @@ def main() -> None:
             f"Output written to {args.output_dir}/hypotheses.tex and"
             f" {args.output_dir}/references.bib"
         )
+
+    if args.output_file:
+        from darwin.output import write_text_output
+
+        write_text_output(
+            output_file=args.output_file,
+            hypotheses=final_hypotheses,
+            literature_context=literature_context,
+            topic=args.topic,
+            meta_review_notes=meta_review_notes,
+            max_iterations=args.iterations,
+        )
+        console.print(f"Text summary written to {args.output_file}")
