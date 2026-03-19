@@ -1,6 +1,7 @@
 """Literature agent — fetches relevant papers from Semantic Scholar."""
 from __future__ import annotations
 
+import anthropic
 import httpx
 
 from darwin.state import ResearchState
@@ -8,6 +9,26 @@ from darwin.state import ResearchState
 _API_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 _TOP_N = 10
 _FIELDS = "title,abstract,authors,year,venue,externalIds,url,paperId"
+
+
+def _distil_query(topic: str) -> str:
+    """Use Claude to distil a verbose research topic into 2-4 search keywords."""
+    client = anthropic.Anthropic()
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=64,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    f"Convert this research topic into 2-4 concise keywords suitable "
+                    f"for a Semantic Scholar search query. Output ONLY the keywords, "
+                    f"nothing else.\n\nTopic: {topic}"
+                ),
+            }
+        ],
+    )
+    return message.content[0].text.strip()
 
 
 def run(state: ResearchState) -> dict[str, object]:
@@ -32,12 +53,13 @@ def run(state: ResearchState) -> dict[str, object]:
         }
 
     topic = state["topic"]
+    query = _distil_query(topic)
     papers: list[dict[str, str]] = []
 
     try:
         response = httpx.get(
             _API_URL,
-            params={"query": topic, "limit": _TOP_N, "fields": _FIELDS},
+            params={"query": query, "limit": _TOP_N, "fields": _FIELDS},
             timeout=15.0,
         )
         response.raise_for_status()
