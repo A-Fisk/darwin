@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import time
 import uuid
 from typing import Any
 
@@ -23,6 +24,22 @@ _NEXT_STATUS: dict[str, str] = {
     "meta_review": "  ⟳ supervisor...",
     "human_review": "  ⟳ supervisor...",
 }
+
+
+def _get_next_phase(current_node: str) -> str | None:
+    """Get the next phase name for timing purposes."""
+    phase_order = {
+        "supervisor": "literature",
+        "literature": "generation",
+        "generation": "reflection",
+        "reflection": "ranking",
+        "ranking": "proximity",
+        "proximity": "evolution",
+        "evolution": "meta_review",
+        "meta_review": "supervisor",
+        "human_review": "supervisor",
+    }
+    return phase_order.get(current_node)
 
 
 def _print_verbose_output(node_name: str, update: dict[str, object]) -> None:
@@ -92,6 +109,10 @@ def _stream_with_progress(
     verbose: bool = False,
 ) -> None:
     """Stream one graph pass, printing per-node progress via Rich Status."""
+    # Track timing for each phase when verbose is enabled
+    phase_timings: dict[str, float] = {}
+    phase_start_time: dict[str, float] = {}
+
     with console.status("  ⟳ supervisor...", spinner="dots") as status:
         for event in graph.stream(state_input, config=config, stream_mode="updates"):
             node_name, update = next(iter(event.items()))
@@ -100,10 +121,27 @@ def _stream_with_progress(
             if node_name.startswith("__"):
                 continue
 
+            # Record phase completion time if timing is being tracked
+            current_time = time.time()
+            if verbose and node_name in phase_start_time:
+                duration = current_time - phase_start_time[node_name]
+                phase_timings[node_name] = duration
+
             console.print(f"  [green]✓[/green] {node_name}")
+
+            # Show timing information for major phases when verbose
+            if verbose and node_name in phase_timings:
+                duration = phase_timings[node_name]
+                console.print(f"    [dim]completed in {duration:.2f}s[/dim]")
 
             if verbose:
                 _print_verbose_output(node_name, update)
+
+            # Set start time for next phase when verbose
+            if verbose:
+                next_phase = _get_next_phase(node_name)
+                if next_phase:
+                    phase_start_time[next_phase] = current_time
 
             if node_name == "supervisor":
                 iteration: int = int(update.get("iteration", 0))
@@ -122,8 +160,12 @@ def _stream_with_progress(
 
                 if decision == "continue":
                     status.update("  ⟳ literature...")
+                    if verbose:
+                        phase_start_time["literature"] = current_time
                 elif decision == "human_review":
                     status.update("  ⟳ human_review...")
+                    if verbose:
+                        phase_start_time["human_review"] = current_time
                 # "stop" → stream will end after this node
 
             elif node_name == "ranking":
@@ -152,7 +194,7 @@ def main() -> None:
     parser.add_argument(
         "--verbose", "-v",
         action="store_true",
-        help="Print each agent's raw output as it completes",
+        help="Print each agent's raw output and execution timing as it completes",
     )
     parser.add_argument(
         "--output-dir",
@@ -193,6 +235,8 @@ def main() -> None:
     console.print(f"Max iterations: {args.iterations}")
     console.print()
 
+    # Track total execution time when verbose
+    start_time = time.time()
     state_input: Any = initial_state
 
     while True:
@@ -217,6 +261,11 @@ def main() -> None:
         )
         state_input = Command(resume=feedback)
         console.print()
+
+    # Show total execution time when verbose
+    if args.verbose:
+        total_time = time.time() - start_time
+        console.print(f"\n[bold green]Total execution time: {total_time:.2f}s[/bold green]")
 
     final_state: dict[str, object] = graph.get_state(config).values  # type: ignore[assignment]
     final_hypotheses: list = final_state.get("final_hypotheses", [])  # type: ignore[assignment]
