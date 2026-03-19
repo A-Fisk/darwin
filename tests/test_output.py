@@ -1,11 +1,6 @@
 """Tests for output.py — BibTeX and LaTeX generation."""
 from __future__ import annotations
 
-import textwrap
-from pathlib import Path
-
-import pytest
-
 from darwin.output import (
     bibtex_key,
     generate_bibtex,
