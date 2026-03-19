@@ -42,31 +42,92 @@ _PAPER_SAME_AUTHOR_YEAR = {
 
 
 class TestBibtexKey:
-    def test_basic_key(self):
-        assert bibtex_key(_PAPER_1) == "Smith2022"
+    def test_basic_key_with_topic(self):
+        # New behavior includes topic keywords from title
+        key = bibtex_key(_PAPER_1)
+        assert key == "smithDoe2022DeepLearning"  # Smith+Doe (2 authors) + year + topic
+
+    def test_single_author_key(self):
+        # Test single author case
+        key = bibtex_key(_PAPER_SAME_AUTHOR_YEAR)
+        assert key == "smith2022AnotherSmith"
 
     def test_no_year(self):
         paper = {**_PAPER_1, "year": ""}
-        assert bibtex_key(paper) == "Smith"
+        key = bibtex_key(paper)
+        assert key == "smithDoeDeepLearning"  # No year, but has authors and topic
 
     def test_no_authors(self):
         paper = {**_PAPER_1, "authors": ""}
         key = bibtex_key(paper)
-        assert "2022" in key
+        assert key == "unknown2022DeepLearning"  # Default author + year + topic
+
+    def test_no_title(self):
+        paper = {**_PAPER_1, "title": ""}
+        key = bibtex_key(paper)
+        assert key == "smithDoe2022"  # Authors + year, no topic
 
     def test_collision_suffix(self):
         used: set[str] = set()
         k1 = bibtex_key(_PAPER_1, used)
-        k2 = bibtex_key(_PAPER_SAME_AUTHOR_YEAR, used)
-        assert k1 == "Smith2022"
-        assert k2 == "Smith2022a"
+        # Create a paper that would generate the same key
+        paper_collision = {
+            "paper_id": "collision",
+            "title": "Deep Learning for Something Else",  # Same topic keywords
+            "authors": "Smith, John, Doe, Jane",  # Same authors
+            "year": "2022",  # Same year
+        }
+        k2 = bibtex_key(paper_collision, used)
+        assert k1 == "smithDoe2022DeepLearning"
+        assert k2 == "smithDoe2022DeepLearninga"  # Collision suffix
         assert k1 != k2
 
     def test_no_collision_different_year(self):
         used: set[str] = set()
         k1 = bibtex_key(_PAPER_1, used)
         k2 = bibtex_key(_PAPER_2, used)
-        assert k1 != k2
+        assert k1 != k2  # Different authors, years, and topics
+
+    def test_three_authors_et_al(self):
+        paper_three = {
+            "paper_id": "three",
+            "title": "Multi Author Machine Learning Study",
+            "authors": "Smith, John and Doe, Jane and Wilson, Bob",
+            "year": "2023",
+        }
+        key = bibtex_key(paper_three)
+        assert key == "smithEtAl2023MultiAuthor"
+
+    def test_keyword_extraction(self):
+        paper_keywords = {
+            "paper_id": "keywords",
+            "title": "Neural Networks for Sleep Spindle Detection in EEG",
+            "authors": "Smith, John",
+            "year": "2023",
+        }
+        key = bibtex_key(paper_keywords)
+        assert key == "smith2023NeuralNetworks"  # Should pick meaningful keywords
+
+    def test_stop_words_filtered(self):
+        paper_stopwords = {
+            "paper_id": "stop",
+            "title": "A Study on the Analysis of Machine Learning",  # Many stop words
+            "authors": "Smith, John",
+            "year": "2023",
+        }
+        key = bibtex_key(paper_stopwords)
+        assert key == "smith2023MachineLearning"  # Should skip stop words
+
+    def test_long_key_truncation(self):
+        paper_long = {
+            "paper_id": "long",
+            "title": "Very Long Title With Many Keywords That Should Be Truncated Appropriately",
+            "authors": "VeryLongSurnameIndeed, John",
+            "year": "2023",
+        }
+        key = bibtex_key(paper_long)
+        assert len(key) <= 50  # Should be truncated
+        assert "verylongsurnameindeed2023" in key  # Should contain author+year
 
 
 class TestGenerateBibtex:
@@ -75,7 +136,8 @@ class TestGenerateBibtex:
 
     def test_single_paper(self):
         bib = generate_bibtex([_PAPER_1])
-        assert "@article{Smith2022," in bib
+        # Key should now be better-bibtex style
+        assert "@article{smithDoe2022DeepLearning," in bib
         assert "Deep Learning for Protein Folding" in bib
         assert "Smith, John" in bib
         assert "2022" in bib
@@ -84,13 +146,13 @@ class TestGenerateBibtex:
 
     def test_multiple_papers(self):
         bib = generate_bibtex([_PAPER_1, _PAPER_2])
-        assert "@article{Smith2022," in bib
-        assert "@article{Johnson2023," in bib
+        assert "@article{smithDoe2022DeepLearning," in bib
+        assert "@article{johnsonLee2023TransformerArchitecture," in bib
 
     def test_collision_handled(self):
         bib = generate_bibtex([_PAPER_1, _PAPER_SAME_AUTHOR_YEAR])
-        assert "@article{Smith2022," in bib
-        assert "@article{Smith2022a," in bib
+        assert "@article{smithDoe2022DeepLearning," in bib
+        assert "@article{smith2022AnotherSmith," in bib
 
     def test_missing_doi_omitted(self):
         bib = generate_bibtex([_PAPER_2])
@@ -128,7 +190,7 @@ class TestGenerateLatex:
     def test_citation_in_hypothesis(self):
         hyps = [self._make_hyp("Hypothesis with citation.", refs=["abc123"])]
         tex = generate_latex(hyps, [_PAPER_1], "topic", "")
-        assert r"\citep{Smith2022}" in tex
+        assert r"\citep{smithDoe2022DeepLearning}" in tex
 
     def test_no_citation_for_unknown_ref(self):
         hyps = [self._make_hyp("Hypothesis.", refs=["nonexistent_id"])]
@@ -234,7 +296,7 @@ class TestWriteOutput:
         tex = (tmp_path / "hypotheses.tex").read_text()
         bib = (tmp_path / "references.bib").read_text()
         assert "Test hypothesis." in tex
-        assert "Smith2022" in bib
+        assert "smithDoe2022DeepLearning" in bib
 
 
 class TestGenerateTextOutput:
