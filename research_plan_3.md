@@ -1,0 +1,98 @@
+
+# Research Plan: Interpretable machine learning models that explici...
+
+**Plan ID:** 2c92c070-7be0-44cc-9f0d-662aebb6dcab
+**Created:** 2026-03-20 10:52
+**Timeline:** 32 weeks
+**Budget:** $606,000.00
+
+## Hypothesis
+
+**ID:** 2133940b
+**Score:** 0.7642
+**Generation:** 1
+
+Interpretable machine learning models that explicitly incorporate thermodynamic potentials as learnable features will reveal previously unknown phase transition pathways in complex materials systems, leading to discovery of metastable phases with superior properties. References: • Jonathan Schmidt, Mário R. G. Marques, S. Botti, Miguel A. L. Marques (2019). Recent advances and applications of machine learning in solid-state materials science. npj Computational Materials. • Xue Jiang, Huadong Fu, Yang Bai, Lei Jiang, Hongtao Zhang, Weiren Wang, Peiwen Yun, Jingjin He, Dezhen Xue, T. Lookman, Yanjing Su, Jianxin Xie (2025). Interpretable Machine Learning Applications: A Promising Prospect of AI for Materials. Advanced Functional Materials. META-REVIEW SUMMARY ---------------------------------------- Strong start with 8 hypotheses showing good diversity across transfer learning, hybrid modeling, and interpretable ML approaches. The top hypothesis on cross-domain transfer learning is particularly novel and addresses a real challenge in materials databases. However, only one iteration completed - significant room for exploring additional angles like uncertainty quantification, active learning for experimental design, and multi-scale modeling integration. LITERATURE SOURCES ---------------------------------------- Total papers referenced: 10 1. K. Butler, D. Davies, H. Cartwright, O. Isayev, A. Walsh (2018). Machine learning for molecular and materials science. Published in: Nature DOI: 10.1038/s41586-018-0337-2 URL: https://www.semanticscholar.org/paper/c292e473b3825eeb9db03c70b2e1c033aea190d5 2. Qiuling Tao, Jinxin Yu, Xiangyu Mu, Xue Jia, Rongpei Shi, Z. Yao, Cuiping Wang, Haijun Zhang, Xingjun Liu (2025). Machine learning strategies for small sample size in materials science. Published in: Science China Materials DOI: 10.1007/s40843-024-3204-5 URL: https://www.semanticscholar.org/paper/e6ab6e5fc10f1c9c4ceb96c8785e5cd8a0e86127 3. Jian Yang, T. Karjala, Jonathan D. Mendenhall, V. Ginzburg, R. Patel, Fawzi G. Hamad, Elva L. Lugo, P. Valavala (2020). Hybrid machine learning/materials science modeling for semi-crystalline polymer during film fabrication process. URL: https://www.semanticscholar.org/paper/662b776101348f340ae8b223ba4fb27836262d2e 4. Nawaf Alampara, Mara Schilling-Wilhelmi, K. Jablonka (2025). Lessons from the trenches on evaluating machine-learning systems in materials science. Published in: Computational materials science DOI: 10.48550/arXiv.2503.10837 URL: https://www.semanticscholar.org/paper/580fc2c077b26aa872a29a4f897b3f08d40519a6 5. Chong Li, Shaobin Yang, Haoyuan Zheng, Yong Zhang, Lailei Wu, Weihua Xue, Ding Shen, Wenwen Lu, Zhien Ni, Meilin Liu, Lin He (2025). Integration of machine learning with finite element analysis in materials science: a review. Published in: Journal of Materials Science DOI: 10.1007/s10853-025-10913-7 URL: https://www.semanticscholar.org/paper/ef95b90451c7438988d05e891dd27cc60c684694 6. Jonathan Schmidt, Tiago F. T. Cerqueira, Aldo H. Romero, Antoine Loew, F. Jäger, Hai-Chen Wang, S. Botti, Miguel A. L. Marques (2024). Improving machine-learning models in materials science through large datasets. Published in: Materials today physics DOI: 10.1016/j.mtphys.2024.101560 URL: https://www.semanticscholar.org/paper/2cd41e20212c206efcaf7dc467025f3fa79e5c83 7. Lei Zhang, Hangyuan Deng (2025). NJmat 2.0: User Instructions of Data-Driven Machine Learning Interface for Materials Science. Published in: Computers, Materials &amp; Continua DOI: 10.32604/cmc.2025.062666 URL: https://www.semanticscholar.org/paper/0f7395201c63bf69ce95d52cb5a44e00f0744863 8. Jonathan Schmidt, Mário R. G. Marques, S. Botti, Miguel A. L. Marques (2019). Recent advances and applications of machine learning in solid-state materials science. Published in: npj Computational Materials DOI: 10.1038/s41524-019-0221-0 URL: https://www.semanticscholar.org/paper/0273507eb05f1135f3a05f9c7adc9a56f12c7c5c 9. Xue Jiang, Huadong Fu, Yang Bai, Lei Jiang, Hongtao Zhang, Weiren Wang, Peiwen Yun, Jingjin He, Dezhen Xue, T. Lookman, Yanjing Su, Jianxin Xie (2025). Interpretable Machine Learning Applications: A Promising Prospect of AI for Materials. Published in: Advanced Functional Materials DOI: 10.1002/adfm.202507734 URL: https://www.semanticscholar.org/paper/b74dd88d975e3c0e1ae5bd717fd931f650a3cf8b 10. Pengcheng Xu, Xiaobo Ji, Minjie Li, Wencong Lu (2023). Small data machine learning in materials science. Published in: npj Computational Materials DOI: 10.1038/s41524-023-01000-z URL: https://www.semanticscholar.org/paper/35b1d79993f0e4fbfcb3b86c5013c5e2a7e3117c ================================================================================ Generated by Darwin Co-Scientist on 2026-03-20 10:49:32 ================================================================================
+
+## Objectives
+
+- Validate the hypothesis: Interpretable machine learning models that explicitly incorporate thermodynamic potentials as learnable features will reveal previously unknown phase transition pathways in complex materials systems, leading to discovery of metastable phases with superior properties. References: • Jonathan Schmidt, Mário R. G. Marques, S. Botti, Miguel A. L. Marques (2019). Recent advances and applications of machine learning in solid-state materials science. npj Computational Materials. • Xue Jiang, Huadong Fu, Yang Bai, Lei Jiang, Hongtao Zhang, Weiren Wang, Peiwen Yun, Jingjin He, Dezhen Xue, T. Lookman, Yanjing Su, Jianxin Xie (2025). Interpretable Machine Learning Applications: A Promising Prospect of AI for Materials. Advanced Functional Materials. META-REVIEW SUMMARY ---------------------------------------- Strong start with 8 hypotheses showing good diversity across transfer learning, hybrid modeling, and interpretable ML approaches. The top hypothesis on cross-domain transfer learning is particularly novel and addresses a real challenge in materials databases. However, only one iteration completed - significant room for exploring additional angles like uncertainty quantification, active learning for experimental design, and multi-scale modeling integration. LITERATURE SOURCES ---------------------------------------- Total papers referenced: 10 1. K. Butler, D. Davies, H. Cartwright, O. Isayev, A. Walsh (2018). Machine learning for molecular and materials science. Published in: Nature DOI: 10.1038/s41586-018-0337-2 URL: https://www.semanticscholar.org/paper/c292e473b3825eeb9db03c70b2e1c033aea190d5 2. Qiuling Tao, Jinxin Yu, Xiangyu Mu, Xue Jia, Rongpei Shi, Z. Yao, Cuiping Wang, Haijun Zhang, Xingjun Liu (2025). Machine learning strategies for small sample size in materials science. Published in: Science China Materials DOI: 10.1007/s40843-024-3204-5 URL: https://www.semanticscholar.org/paper/e6ab6e5fc10f1c9c4ceb96c8785e5cd8a0e86127 3. Jian Yang, T. Karjala, Jonathan D. Mendenhall, V. Ginzburg, R. Patel, Fawzi G. Hamad, Elva L. Lugo, P. Valavala (2020). Hybrid machine learning/materials science modeling for semi-crystalline polymer during film fabrication process. URL: https://www.semanticscholar.org/paper/662b776101348f340ae8b223ba4fb27836262d2e 4. Nawaf Alampara, Mara Schilling-Wilhelmi, K. Jablonka (2025). Lessons from the trenches on evaluating machine-learning systems in materials science. Published in: Computational materials science DOI: 10.48550/arXiv.2503.10837 URL: https://www.semanticscholar.org/paper/580fc2c077b26aa872a29a4f897b3f08d40519a6 5. Chong Li, Shaobin Yang, Haoyuan Zheng, Yong Zhang, Lailei Wu, Weihua Xue, Ding Shen, Wenwen Lu, Zhien Ni, Meilin Liu, Lin He (2025). Integration of machine learning with finite element analysis in materials science: a review. Published in: Journal of Materials Science DOI: 10.1007/s10853-025-10913-7 URL: https://www.semanticscholar.org/paper/ef95b90451c7438988d05e891dd27cc60c684694 6. Jonathan Schmidt, Tiago F. T. Cerqueira, Aldo H. Romero, Antoine Loew, F. Jäger, Hai-Chen Wang, S. Botti, Miguel A. L. Marques (2024). Improving machine-learning models in materials science through large datasets. Published in: Materials today physics DOI: 10.1016/j.mtphys.2024.101560 URL: https://www.semanticscholar.org/paper/2cd41e20212c206efcaf7dc467025f3fa79e5c83 7. Lei Zhang, Hangyuan Deng (2025). NJmat 2.0: User Instructions of Data-Driven Machine Learning Interface for Materials Science. Published in: Computers, Materials &amp; Continua DOI: 10.32604/cmc.2025.062666 URL: https://www.semanticscholar.org/paper/0f7395201c63bf69ce95d52cb5a44e00f0744863 8. Jonathan Schmidt, Mário R. G. Marques, S. Botti, Miguel A. L. Marques (2019). Recent advances and applications of machine learning in solid-state materials science. Published in: npj Computational Materials DOI: 10.1038/s41524-019-0221-0 URL: https://www.semanticscholar.org/paper/0273507eb05f1135f3a05f9c7adc9a56f12c7c5c 9. Xue Jiang, Huadong Fu, Yang Bai, Lei Jiang, Hongtao Zhang, Weiren Wang, Peiwen Yun, Jingjin He, Dezhen Xue, T. Lookman, Yanjing Su, Jianxin Xie (2025). Interpretable Machine Learning Applications: A Promising Prospect of AI for Materials. Published in: Advanced Functional Materials DOI: 10.1002/adfm.202507734 URL: https://www.semanticscholar.org/paper/b74dd88d975e3c0e1ae5bd717fd931f650a3cf8b 10. Pengcheng Xu, Xiaobo Ji, Minjie Li, Wencong Lu (2023). Small data machine learning in materials science. Published in: npj Computational Materials DOI: 10.1038/s41524-023-01000-z URL: https://www.semanticscholar.org/paper/35b1d79993f0e4fbfcb3b86c5013c5e2a7e3117c ================================================================================ Generated by Darwin Co-Scientist on 2026-03-20 10:49:32 ================================================================================
+- Develop reproducible experimental methodology
+- Quantify the effect size and statistical significance
+- Assess practical implications and applications
+- Document findings for peer review and replication
+
+## Methodology
+
+
+        This research will employ a systematic approach to validate the hypothesis through
+        both computational and experimental methods. The methodology will include:
+
+        1. Comprehensive literature review and gap analysis
+        2. Development of validated experimental protocols
+        3. Systematic data collection with appropriate controls
+        4. Statistical analysis and hypothesis testing
+        5. Results validation and reproducibility assessment
+
+        The approach is designed to provide robust evidence for or against the hypothesis:
+        "Interpretable machine learning models that explicitly incorporate thermodynamic potentials as learnable features will reveal previously unknown phase transition pathways in complex materials systems, leading to discovery of metastable phases with superior properties. References: • Jonathan Schmidt, Mário R. G. Marques, S. Botti, Miguel A. L. Marques (2019). Recent advances and applications of machine learning in solid-state materials science. npj Computational Materials. • Xue Jiang, Huadong Fu, Yang Bai, Lei Jiang, Hongtao Zhang, Weiren Wang, Peiwen Yun, Jingjin He, Dezhen Xue, T. Lookman, Yanjing Su, Jianxin Xie (2025). Interpretable Machine Learning Applications: A Promising Prospect of AI for Materials. Advanced Functional Materials. META-REVIEW SUMMARY ---------------------------------------- Strong start with 8 hypotheses showing good diversity across transfer learning, hybrid modeling, and interpretable ML approaches. The top hypothesis on cross-domain transfer learning is particularly novel and addresses a real challenge in materials databases. However, only one iteration completed - significant room for exploring additional angles like uncertainty quantification, active learning for experimental design, and multi-scale modeling integration. LITERATURE SOURCES ---------------------------------------- Total papers referenced: 10 1. K. Butler, D. Davies, H. Cartwright, O. Isayev, A. Walsh (2018). Machine learning for molecular and materials science. Published in: Nature DOI: 10.1038/s41586-018-0337-2 URL: https://www.semanticscholar.org/paper/c292e473b3825eeb9db03c70b2e1c033aea190d5 2. Qiuling Tao, Jinxin Yu, Xiangyu Mu, Xue Jia, Rongpei Shi, Z. Yao, Cuiping Wang, Haijun Zhang, Xingjun Liu (2025). Machine learning strategies for small sample size in materials science. Published in: Science China Materials DOI: 10.1007/s40843-024-3204-5 URL: https://www.semanticscholar.org/paper/e6ab6e5fc10f1c9c4ceb96c8785e5cd8a0e86127 3. Jian Yang, T. Karjala, Jonathan D. Mendenhall, V. Ginzburg, R. Patel, Fawzi G. Hamad, Elva L. Lugo, P. Valavala (2020). Hybrid machine learning/materials science modeling for semi-crystalline polymer during film fabrication process. URL: https://www.semanticscholar.org/paper/662b776101348f340ae8b223ba4fb27836262d2e 4. Nawaf Alampara, Mara Schilling-Wilhelmi, K. Jablonka (2025). Lessons from the trenches on evaluating machine-learning systems in materials science. Published in: Computational materials science DOI: 10.48550/arXiv.2503.10837 URL: https://www.semanticscholar.org/paper/580fc2c077b26aa872a29a4f897b3f08d40519a6 5. Chong Li, Shaobin Yang, Haoyuan Zheng, Yong Zhang, Lailei Wu, Weihua Xue, Ding Shen, Wenwen Lu, Zhien Ni, Meilin Liu, Lin He (2025). Integration of machine learning with finite element analysis in materials science: a review. Published in: Journal of Materials Science DOI: 10.1007/s10853-025-10913-7 URL: https://www.semanticscholar.org/paper/ef95b90451c7438988d05e891dd27cc60c684694 6. Jonathan Schmidt, Tiago F. T. Cerqueira, Aldo H. Romero, Antoine Loew, F. Jäger, Hai-Chen Wang, S. Botti, Miguel A. L. Marques (2024). Improving machine-learning models in materials science through large datasets. Published in: Materials today physics DOI: 10.1016/j.mtphys.2024.101560 URL: https://www.semanticscholar.org/paper/2cd41e20212c206efcaf7dc467025f3fa79e5c83 7. Lei Zhang, Hangyuan Deng (2025). NJmat 2.0: User Instructions of Data-Driven Machine Learning Interface for Materials Science. Published in: Computers, Materials &amp; Continua DOI: 10.32604/cmc.2025.062666 URL: https://www.semanticscholar.org/paper/0f7395201c63bf69ce95d52cb5a44e00f0744863 8. Jonathan Schmidt, Mário R. G. Marques, S. Botti, Miguel A. L. Marques (2019). Recent advances and applications of machine learning in solid-state materials science. Published in: npj Computational Materials DOI: 10.1038/s41524-019-0221-0 URL: https://www.semanticscholar.org/paper/0273507eb05f1135f3a05f9c7adc9a56f12c7c5c 9. Xue Jiang, Huadong Fu, Yang Bai, Lei Jiang, Hongtao Zhang, Weiren Wang, Peiwen Yun, Jingjin He, Dezhen Xue, T. Lookman, Yanjing Su, Jianxin Xie (2025). Interpretable Machine Learning Applications: A Promising Prospect of AI for Materials. Published in: Advanced Functional Materials DOI: 10.1002/adfm.202507734 URL: https://www.semanticscholar.org/paper/b74dd88d975e3c0e1ae5bd717fd931f650a3cf8b 10. Pengcheng Xu, Xiaobo Ji, Minjie Li, Wencong Lu (2023). Small data machine learning in materials science. Published in: npj Computational Materials DOI: 10.1038/s41524-023-01000-z URL: https://www.semanticscholar.org/paper/35b1d79993f0e4fbfcb3b86c5013c5e2a7e3117c ================================================================================ Generated by Darwin Co-Scientist on 2026-03-20 10:49:32 ================================================================================"
+        
+
+## Timeline & Milestones
+
+| Milestone | Phase | Due Date | Status |
+|-----------|-------|----------|---------|
+| Foundation Complete | foundation | 2026-05-15 | planned |
+| Development Complete | development | 2026-07-31 | planned |
+| Execution Complete | execution | 2026-10-02 | planned |
+| Project Complete | dissemination | 2026-10-30 | planned |
+
+## Resource Requirements
+
+| Resource | Type | Quantity | Cost | Criticality |
+|----------|------|----------|------|-------------|
+| GPU Cluster | equipment | 1 | $50,000.00 | high |
+| Cloud Computing Credits | software | 10000 | $0.50 | medium |
+| Synthesis Equipment | equipment | 1 | $75,000.00 | high |
+| Chemical Precursors | material | 100 | $500.00 | medium |
+| XRD System | equipment | 1 | $200,000.00 | high |
+| SEM/TEM Access | equipment | 40 | $150.00 | medium |
+| Principal Investigator | personnel | 1 | $120,000.00 | critical |
+| Research Assistant | personnel | 2 | $50,000.00 | high |
+
+**Total Budget:** $606,000.00
+
+## Risk Assessment
+
+### High-cost equipment may be unavailable or delayed (High Risk)
+**Probability:** 25%
+**Category:** resource
+**Mitigation:** Early procurement and backup equipment identification
+**Contingency:** Alternative methods or equipment sharing agreements
+
+### Timeline delays due to experimental complexity (Medium Risk)
+**Probability:** 45%
+**Category:** external
+**Mitigation:** Realistic scheduling with buffer allocation
+**Contingency:** Parallel processing and scope prioritization
+
+
+## Experimental Design
+
+**Study Type:** {plan.experimental_design.study_type}
+**Sample Size:** {plan.experimental_design.sample_size}
+
+**Control Groups:** {', '.join(plan.experimental_design.control_groups)}
+**Independent Variables:** {', '.join(plan.experimental_design.independent_variables)}
+**Dependent Variables:** {', '.join(plan.experimental_design.dependent_variables)}
+**Statistical Methods:** {', '.join(plan.experimental_design.statistical_methods)}
+
+### Power Analysis
+{chr(10).join(f"- **{k}:** {v}" for k, v in plan.experimental_design.power_analysis.items())}
+
+## Expected Outcomes
+
+{chr(10).join(f"- {outcome}" for outcome in plan.expected_outcomes)}
+
+---
+*Generated by Research Plan Generator*

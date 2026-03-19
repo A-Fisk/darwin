@@ -1,0 +1,233 @@
+{
+  "projects": [
+    {
+      "id": "proj_1",
+      "name": "Hypothesis d8cfd6d1",
+      "description": "Cross-domain transfer learning between materials databases will exhibit systematic biases that corre...",
+      "start_date": "2026-03-20T10:52:13.361514",
+      "duration_weeks": 40,
+      "budget": 220000.0
+    },
+    {
+      "id": "proj_2",
+      "name": "Hypothesis 4393d055",
+      "description": "Hybrid machine learning approaches that dynamically switch between data- driven and physics-based mo...",
+      "start_date": "2026-03-20T10:52:13.361560",
+      "duration_weeks": 32,
+      "budget": 606000.0
+    },
+    {
+      "id": "proj_3",
+      "name": "Hypothesis 2133940b",
+      "description": "Interpretable machine learning models that explicitly incorporate thermodynamic potentials as learna...",
+      "start_date": "2026-03-20T10:52:13.361643",
+      "duration_weeks": 32,
+      "budget": 606000.0
+    }
+  ],
+  "tasks": [
+    {
+      "id": "proj_1_M1",
+      "project_id": "proj_1",
+      "name": "Foundation Complete",
+      "description": "Literature review and methodology setup",
+      "due_date": "2026-05-29T10:52:13.361472",
+      "deliverables": [
+        "Comprehensive literature review",
+        "Methodology validation report",
+        "Resource procurement complete"
+      ],
+      "phase": "foundation"
+    },
+    {
+      "id": "proj_1_M2",
+      "project_id": "proj_1",
+      "name": "Development Complete",
+      "description": "Method development and initial validation",
+      "due_date": "2026-09-04T10:52:13.361472",
+      "deliverables": [
+        "Validated experimental protocols",
+        "Initial proof-of-concept results",
+        "Quality control procedures"
+      ],
+      "phase": "development"
+    },
+    {
+      "id": "proj_1_M3",
+      "project_id": "proj_1",
+      "name": "Execution Complete",
+      "description": "Full experimental campaign and analysis",
+      "due_date": "2026-11-27T10:52:13.361472",
+      "deliverables": [
+        "Complete experimental dataset",
+        "Statistical analysis results",
+        "Hypothesis validation results"
+      ],
+      "phase": "execution"
+    },
+    {
+      "id": "proj_1_M4",
+      "project_id": "proj_1",
+      "name": "Project Complete",
+      "description": "Results validation and dissemination",
+      "due_date": "2026-12-25T10:52:13.361472",
+      "deliverables": [
+        "Peer-reviewed publication draft",
+        "Reproducibility documentation",
+        "Data and code repositories"
+      ],
+      "phase": "dissemination"
+    },
+    {
+      "id": "proj_2_M1",
+      "project_id": "proj_2",
+      "name": "Foundation Complete",
+      "description": "Literature review and methodology setup",
+      "due_date": "2026-05-15T10:52:13.361537",
+      "deliverables": [
+        "Comprehensive literature review",
+        "Methodology validation report",
+        "Resource procurement complete"
+      ],
+      "phase": "foundation"
+    },
+    {
+      "id": "proj_2_M2",
+      "project_id": "proj_2",
+      "name": "Development Complete",
+      "description": "Method development and initial validation",
+      "due_date": "2026-07-31T10:52:13.361537",
+      "deliverables": [
+        "Validated experimental protocols",
+        "Initial proof-of-concept results",
+        "Quality control procedures"
+      ],
+      "phase": "development"
+    },
+    {
+      "id": "proj_2_M3",
+      "project_id": "proj_2",
+      "name": "Execution Complete",
+      "description": "Full experimental campaign and analysis",
+      "due_date": "2026-10-02T10:52:13.361537",
+      "deliverables": [
+        "Complete experimental dataset",
+        "Statistical analysis results",
+        "Hypothesis validation results"
+      ],
+      "phase": "execution"
+    },
+    {
+      "id": "proj_2_M4",
+      "project_id": "proj_2",
+      "name": "Project Complete",
+      "description": "Results validation and dissemination",
+      "due_date": "2026-10-30T10:52:13.361537",
+      "deliverables": [
+        "Peer-reviewed publication draft",
+        "Reproducibility documentation",
+        "Data and code repositories"
+      ],
+      "phase": "dissemination"
+    },
+    {
+      "id": "proj_3_M1",
+      "project_id": "proj_3",
+      "name": "Foundation Complete",
+      "description": "Literature review and methodology setup",
+      "due_date": "2026-05-15T10:52:13.361592",
+      "deliverables": [
+        "Comprehensive literature review",
+        "Methodology validation report",
+        "Resource procurement complete"
+      ],
+      "phase": "foundation"
+    },
+    {
+      "id": "proj_3_M2",
+      "project_id": "proj_3",
+      "name": "Development Complete",
+      "description": "Method development and initial validation",
+      "due_date": "2026-07-31T10:52:13.361592",
+      "deliverables": [
+        "Validated experimental protocols",
+        "Initial proof-of-concept results",
+        "Quality control procedures"
+      ],
+      "phase": "development"
+    },
+    {
+      "id": "proj_3_M3",
+      "project_id": "proj_3",
+      "name": "Execution Complete",
+      "description": "Full experimental campaign and analysis",
+      "due_date": "2026-10-02T10:52:13.361592",
+      "deliverables": [
+        "Complete experimental dataset",
+        "Statistical analysis results",
+        "Hypothesis validation results"
+      ],
+      "phase": "execution"
+    },
+    {
+      "id": "proj_3_M4",
+      "project_id": "proj_3",
+      "name": "Project Complete",
+      "description": "Results validation and dissemination",
+      "due_date": "2026-10-30T10:52:13.361592",
+      "deliverables": [
+        "Peer-reviewed publication draft",
+        "Reproducibility documentation",
+        "Data and code repositories"
+      ],
+      "phase": "dissemination"
+    }
+  ],
+  "dependencies": [
+    {
+      "predecessor": "proj_1_M1",
+      "successor": "proj_1_M2",
+      "type": "finish_to_start"
+    },
+    {
+      "predecessor": "proj_1_M2",
+      "successor": "proj_1_M3",
+      "type": "finish_to_start"
+    },
+    {
+      "predecessor": "proj_1_M3",
+      "successor": "proj_1_M4",
+      "type": "finish_to_start"
+    },
+    {
+      "predecessor": "proj_2_M1",
+      "successor": "proj_2_M2",
+      "type": "finish_to_start"
+    },
+    {
+      "predecessor": "proj_2_M2",
+      "successor": "proj_2_M3",
+      "type": "finish_to_start"
+    },
+    {
+      "predecessor": "proj_2_M3",
+      "successor": "proj_2_M4",
+      "type": "finish_to_start"
+    },
+    {
+      "predecessor": "proj_3_M1",
+      "successor": "proj_3_M2",
+      "type": "finish_to_start"
+    },
+    {
+      "predecessor": "proj_3_M2",
+      "successor": "proj_3_M3",
+      "type": "finish_to_start"
+    },
+    {
+      "predecessor": "proj_3_M3",
+      "successor": "proj_3_M4",
+      "type": "finish_to_start"
+    }
+  ]
+}
