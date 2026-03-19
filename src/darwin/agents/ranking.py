@@ -10,11 +10,10 @@ from itertools import combinations
 from typing import Any
 
 import anthropic
-from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from darwin.agents._common import criteria_prompt_block, latest_hypotheses, parse_json_response
 from darwin.config import TOP_N_HYPOTHESES, MAX_TOKENS_COMPLEX
+from darwin.console import progress_context
 from darwin.state import Hypothesis, ResearchState
 
 _K = 32.0
@@ -386,16 +385,8 @@ def run(state: ResearchState) -> dict[str, object]:
         ratings = {h["id"]: 800.0 + h["score"] * 400.0 for h in pool}
 
         pairs = list(combinations(pool, 2))
-        console = Console()
 
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            console=console,
-            transient=True,
-        ) as progress:
+        with progress_context(f"Ranking {len(pool)} hypotheses") as progress:
             task = progress.add_task(f"[cyan]Ranking {len(pool)} hypotheses", total=len(pairs))
 
             for i, (ha, hb) in enumerate(pairs):

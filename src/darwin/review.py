@@ -1,14 +1,14 @@
 """Human review UX — rich hypothesis table and interactive feedback prompt."""
 from __future__ import annotations
 
-from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
 
+from darwin.console import get_console
 from darwin.state import Hypothesis
 
-console = Console()
+console = get_console()
 
 
 def display_hypotheses_table(

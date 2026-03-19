@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 import anthropic
-from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 
 from darwin.agents._common import criteria_prompt_block, parse_json_response
 from darwin.config import MAX_TOKENS_DETAILED
+from darwin.console import progress_context
 from darwin.state import Hypothesis, ResearchState
 
 _SYSTEM = """\
@@ -53,16 +52,8 @@ def run(state: ResearchState) -> dict[str, object]:
             lit_index[pid] = p.get("title", "")
 
     updated: list[Hypothesis] = []
-    console = Console()
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TaskProgressColumn(),
-        console=console,
-        transient=True,
-    ) as progress:
+    with progress_context(f"Reflecting on {len(current)} hypotheses") as progress:
         task = progress.add_task(f"[cyan]Reflecting on {len(current)} hypotheses", total=len(current))
 
         for i, hyp in enumerate(current):

@@ -4,10 +4,10 @@ from __future__ import annotations
 import uuid
 
 import anthropic
-from rich.console import Console
 
 from darwin.agents._common import latest_hypotheses, parse_json_response
 from darwin.config import NEW_PER_ITERATION, MAX_TOKENS_CREATIVE
+from darwin.console import print_safe
 from darwin.state import Hypothesis, ResearchState
 
 _SYSTEM_BASE = """\
@@ -41,7 +41,6 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 def run(state: ResearchState) -> dict[str, object]:
     """Generate NEW_PER_ITERATION new hypotheses for the current iteration."""
     client = anthropic.Anthropic()
-    console = Console()
 
     existing = latest_hypotheses(state["hypotheses"])
     context = ""
@@ -52,7 +51,7 @@ def run(state: ResearchState) -> dict[str, object]:
         )
 
     lit_context: list[dict[str, str]] = state.get("literature_context") or []
-    console.print(f"  [cyan]Generating {NEW_PER_ITERATION} new hypotheses...[/cyan]")
+    print_safe(f"  [cyan]Generating {NEW_PER_ITERATION} new hypotheses...[/cyan]")
 
     if lit_context:
         lit_lines = []
@@ -112,7 +111,7 @@ def run(state: ResearchState) -> dict[str, object]:
             )
         )
 
-    console.print(f"  [green]✓[/green] Generated {len(new_hypotheses)} hypotheses")
+    print_safe(f"  [green]✓[/green] Generated {len(new_hypotheses)} hypotheses")
 
     return {
         "hypotheses": new_hypotheses,

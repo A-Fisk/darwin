@@ -6,12 +6,12 @@ import time
 import uuid
 from typing import Any
 
-from rich.console import Console
 from rich.markup import escape
 
 from darwin.config import DEFAULT_MAX_ITERATIONS
+from darwin.console import get_console, status_context
 
-console = Console()
+console = get_console()
 
 # After a node completes, what spinner text to show while next node runs
 _NEXT_STATUS: dict[str, str] = {
@@ -113,7 +113,7 @@ def _stream_with_progress(
     phase_timings: dict[str, float] = {}
     phase_start_time: dict[str, float] = {}
 
-    with console.status("  ⟳ supervisor...", spinner="dots") as status:
+    with status_context("  ⟳ supervisor...", spinner="dots") as status:
         for event in graph.stream(state_input, config=config, stream_mode="updates"):
             node_name, update = next(iter(event.items()))
 

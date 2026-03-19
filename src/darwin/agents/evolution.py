@@ -4,10 +4,10 @@ from __future__ import annotations
 import uuid
 
 import anthropic
-from rich.console import Console
 
 from darwin.agents._common import parse_json_response
 from darwin.config import EVOLVED_PER_ITERATION, MAX_TOKENS_CREATIVE
+from darwin.console import print_safe
 from darwin.state import Hypothesis, ResearchState
 
 _SYSTEM = """\
@@ -27,7 +27,6 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 def run(state: ResearchState) -> dict[str, object]:
     """Evolve EVOLVED_PER_ITERATION new hypotheses from top_hypotheses."""
     client = anthropic.Anthropic()
-    console = Console()
 
     parents = state.get("top_hypotheses") or []
     if not parents:
@@ -38,7 +37,10 @@ def run(state: ResearchState) -> dict[str, object]:
             ],
         }
 
-    console.print(f"  [cyan]Evolving {EVOLVED_PER_ITERATION} new hypotheses from {len(parents)} parents...[/cyan]")
+    print_safe(
+        f"  [cyan]Evolving {EVOLVED_PER_ITERATION} new hypotheses "
+        f"from {len(parents)} parents...[/cyan]"
+    )
 
     parents_text = "\n".join(
         f'ID: {h["id"]} — {h["text"]}' for h in parents
@@ -81,7 +83,7 @@ def run(state: ResearchState) -> dict[str, object]:
             )
         )
 
-    console.print(f"  [green]✓[/green] Generated {len(evolved)} evolved hypotheses")
+    print_safe(f"  [green]✓[/green] Generated {len(evolved)} evolved hypotheses")
 
     return {
         "hypotheses": evolved,
