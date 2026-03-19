@@ -178,3 +178,54 @@ class TestMainVerboseArg:
         mock_stream.assert_called_once()
         _, kwargs = mock_stream.call_args
         assert kwargs.get("verbose") is False
+
+
+class TestMainOutputDirArg:
+    def _run_main(self, argv: list[str], state_values: dict | None = None) -> MagicMock:
+        if state_values is None:
+            state_values = {"final_hypotheses": [], "meta_review_notes": "", "literature_context": []}
+        with patch("sys.argv", argv):
+            with patch("darwin.cli._stream_with_progress"):
+                with patch("darwin.graph.build_graph") as mock_build:
+                    mock_graph = MagicMock()
+                    mock_graph.get_state.return_value = MagicMock(tasks=[], values=state_values)
+                    mock_build.return_value = mock_graph
+                    with patch("darwin.review.display_final_results"):
+                        with patch("darwin.output.write_output") as mock_write:
+                            main()
+                            return mock_write
+
+    def test_output_dir_calls_write_output(self) -> None:
+        """--output-dir should call write_output with the given directory."""
+        mock_write = self._run_main(["darwin", "test topic", "--output-dir", "/tmp/out"])
+        mock_write.assert_called_once()
+        call_kwargs = mock_write.call_args.kwargs
+        assert str(call_kwargs["output_dir"]) == "/tmp/out"
+
+    def test_output_dir_passes_state_data(self) -> None:
+        """write_output should receive final_hypotheses and literature_context from state."""
+        state_values = {
+            "final_hypotheses": [{"id": "h1", "text": "hi", "score": 0.9}],
+            "meta_review_notes": "good",
+            "literature_context": [{"title": "Paper A"}],
+        }
+        with patch("sys.argv", ["darwin", "test topic", "--output-dir", "/tmp/out"]):
+            with patch("darwin.cli._stream_with_progress"):
+                with patch("darwin.graph.build_graph") as mock_build:
+                    mock_graph = MagicMock()
+                    mock_graph.get_state.return_value = MagicMock(tasks=[], values=state_values)
+                    mock_build.return_value = mock_graph
+                    with patch("darwin.review.display_final_results"):
+                        with patch("darwin.output.write_output") as mock_write:
+                            main()
+        mock_write.assert_called_once()
+        kwargs = mock_write.call_args.kwargs
+        assert kwargs["hypotheses"] == state_values["final_hypotheses"]
+        assert kwargs["literature_context"] == state_values["literature_context"]
+        assert kwargs["topic"] == "test topic"
+        assert kwargs["meta_review_notes"] == "good"
+
+    def test_no_output_dir_does_not_call_write_output(self) -> None:
+        """Without --output-dir, write_output should not be called."""
+        mock_write = self._run_main(["darwin", "test topic"])
+        mock_write.assert_not_called()

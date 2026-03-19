@@ -60,6 +60,7 @@ uv run darwin "<research question>"
 | Flag | Default | Description |
 |---|---|---|
 | `--iterations N` | `5` | Maximum number of research iterations |
+| `--output-dir DIR` | _(none)_ | Write `hypotheses.tex` and `references.bib` to DIR on completion |
 
 **Examples:**
 
@@ -69,6 +70,9 @@ uv run darwin "What causes antibiotic resistance to spread in hospital settings?
 
 # Run more iterations for deeper exploration
 uv run darwin "Novel mechanisms for carbon capture" --iterations 10
+
+# Save results as LaTeX + BibTeX files
+uv run darwin "Novel mechanisms for carbon capture" --output-dir ./results
 ```
 
 ---

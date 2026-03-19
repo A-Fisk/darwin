@@ -154,6 +154,12 @@ def main() -> None:
         action="store_true",
         help="Print each agent's raw output as it completes",
     )
+    parser.add_argument(
+        "--output-dir",
+        metavar="DIR",
+        default=None,
+        help="Write hypotheses.tex and references.bib to DIR on completion",
+    )
     args = parser.parse_args()
 
     from langgraph.checkpoint.memory import MemorySaver
@@ -213,8 +219,26 @@ def main() -> None:
         console.print()
 
     final_state: dict[str, object] = graph.get_state(config).values  # type: ignore[assignment]
+    final_hypotheses: list = final_state.get("final_hypotheses", [])  # type: ignore[assignment]
+    meta_review_notes = str(final_state.get("meta_review_notes", ""))
     display_final_results(
-        final_hypotheses=final_state.get("final_hypotheses", []),  # type: ignore[arg-type]
-        meta_review_notes=str(final_state.get("meta_review_notes", "")),
+        final_hypotheses=final_hypotheses,
+        meta_review_notes=meta_review_notes,
         topic=args.topic,
     )
+
+    if args.output_dir:
+        from darwin.output import write_output
+
+        literature_context: list = final_state.get("literature_context", [])  # type: ignore[assignment]
+        write_output(
+            output_dir=args.output_dir,
+            hypotheses=final_hypotheses,
+            literature_context=literature_context,
+            topic=args.topic,
+            meta_review_notes=meta_review_notes,
+        )
+        console.print(
+            f"Output written to {args.output_dir}/hypotheses.tex and"
+            f" {args.output_dir}/references.bib"
+        )
