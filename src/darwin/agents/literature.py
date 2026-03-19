@@ -7,7 +7,7 @@ from darwin.state import ResearchState
 
 _API_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 _TOP_N = 10
-_FIELDS = "title,abstract,authors,url,paperId"
+_FIELDS = "title,abstract,authors,year,venue,externalIds,url,paperId"
 
 
 def run(state: ResearchState) -> dict[str, object]:
@@ -47,12 +47,17 @@ def run(state: ResearchState) -> dict[str, object]:
             abstract = item.get("abstract") or ""
             authors_raw = item.get("authors") or []
             authors = ", ".join(a.get("name", "") for a in authors_raw)
+            external_ids = item.get("externalIds") or {}
+            doi = external_ids.get("DOI", "")
             papers.append(
                 {
                     "paper_id": item.get("paperId", ""),
                     "title": item.get("title", ""),
                     "abstract": abstract[:600],  # Truncate long abstracts
                     "authors": authors,
+                    "year": item.get("year") or "",
+                    "venue": item.get("venue") or "",
+                    "doi": doi,
                     "url": (
                         item.get("url")
                         or f"https://www.semanticscholar.org/paper/{item.get('paperId', '')}"
