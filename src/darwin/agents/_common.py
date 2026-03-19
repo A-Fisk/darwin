@@ -12,11 +12,17 @@ import anthropic
 from darwin.state import Hypothesis
 
 
-def parse_json_response(message: anthropic.types.Message) -> object:
+def parse_json_response(
+    message: anthropic.types.Message, prefill: str = ""
+) -> object:
     """Extract and parse a JSON response from a Claude API message.
 
     Handles the case where the model wraps output in markdown fences despite
     instructions not to, and raises a clear error when the response is empty.
+
+    If `prefill` is provided, it is prepended to the response text before
+    parsing — use this when the assistant turn was prefilled (e.g. "{") to
+    force JSON output without preamble.
     """
     if not message.content:
         raise ValueError("Claude API returned empty content list")
@@ -25,7 +31,7 @@ def parse_json_response(message: anthropic.types.Message) -> object:
     if block.type != "text":
         raise ValueError(f"Expected text content block, got {block.type!r}")
 
-    text = block.text.strip()
+    text = (prefill + block.text).strip()
     if not text:
         raise ValueError("Claude API returned an empty text response")
 
