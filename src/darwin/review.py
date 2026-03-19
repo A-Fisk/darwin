@@ -87,8 +87,9 @@ def display_final_results(
     final_hypotheses: list[Hypothesis],
     meta_review_notes: str,
     topic: str,
+    literature_context: list[dict[str, str]] | None = None,
 ) -> None:
-    """Render the final ranked hypothesis list and meta-review summary."""
+    """Render the final ranked hypothesis list and meta-review summary with numbered references."""
     console.print()
     console.print(
         Panel(
@@ -104,6 +105,26 @@ def display_final_results(
         console.print("[dim]No final hypotheses recorded.[/dim]")
         return
 
+    # Build reference mapping if literature context is available
+    paper_id_to_num: dict[str, int] = {}
+    reference_list: list[dict[str, str]] = []
+
+    if literature_context:
+        # Collect all unique paper IDs referenced across hypotheses
+        all_refs: set[str] = set()
+        for h in final_hypotheses:
+            refs: list[str] = h.get("references", [])
+            all_refs.update(refs)
+
+        # Create ordered mapping from paper_id to reference number
+        for i, paper_id in enumerate(sorted(all_refs), 1):
+            paper_id_to_num[paper_id] = i
+            # Find the paper details in literature context
+            for paper in literature_context:
+                if paper.get("paper_id") == paper_id:
+                    reference_list.append(paper)
+                    break
+
     table = Table(
         title="Final Ranked Hypotheses",
         show_header=True,
@@ -118,14 +139,53 @@ def display_final_results(
     table.add_column("Gen", justify="center", style="dim", width=5)
 
     for rank, h in enumerate(final_hypotheses, 1):
+        hypothesis_text = h["text"]
+
+        # Add numbered references to hypothesis text if available
+        if literature_context and paper_id_to_num:
+            refs: list[str] = h.get("references", [])
+            if refs:
+                # Get reference numbers for this hypothesis
+                ref_nums = [paper_id_to_num[ref_id] for ref_id in refs if ref_id in paper_id_to_num]
+                if ref_nums:
+                    ref_nums.sort()
+                    ref_str = ",".join(str(n) for n in ref_nums)
+                    hypothesis_text = f"{hypothesis_text} [{ref_str}]"
+
         table.add_row(
             f"#{rank}",
-            h["text"],
+            hypothesis_text,
             f"{h['score']:.4f}",
             str(h["generation"]),
         )
 
     console.print(table)
+
+    # Display reference list if available
+    if reference_list:
+        console.print()
+        ref_table = Table(
+            title="References",
+            show_header=False,
+            border_style="cyan",
+            expand=True,
+        )
+        ref_table.add_column("Reference", style="white")
+
+        for i, paper in enumerate(reference_list, 1):
+            authors = paper.get("authors", "Unknown authors")
+            year = paper.get("year", "Unknown year")
+            title = paper.get("title", "Unknown title")
+            venue = paper.get("venue", "")
+
+            # Format: [1] Author et al. (Year). Title. Journal.
+            citation = f"[{i}] {authors} ({year}). {title}."
+            if venue:
+                citation += f" {venue}."
+
+            ref_table.add_row(citation)
+
+        console.print(ref_table)
 
     if meta_review_notes:
         console.print()
