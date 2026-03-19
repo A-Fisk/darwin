@@ -106,7 +106,7 @@ def _stream_with_progress(
     state_input: Any,
     config: dict[str, object],
     max_iterations: int,
-    verbose: bool = False,
+    verbose: int = 0,
 ) -> None:
     """Stream one graph pass, printing per-node progress via Rich Status."""
     # Track timing for each phase when verbose is enabled
@@ -123,22 +123,22 @@ def _stream_with_progress(
 
             # Record phase completion time if timing is being tracked
             current_time = time.time()
-            if verbose and node_name in phase_start_time:
+            if verbose >= 1 and node_name in phase_start_time:
                 duration = current_time - phase_start_time[node_name]
                 phase_timings[node_name] = duration
 
             console.print(f"  [green]✓[/green] {node_name}")
 
             # Show timing information for major phases when verbose
-            if verbose and node_name in phase_timings:
+            if verbose >= 1 and node_name in phase_timings:
                 duration = phase_timings[node_name]
                 console.print(f"    [dim]completed in {duration:.2f}s[/dim]")
 
-            if verbose:
+            if verbose >= 1:
                 _print_verbose_output(node_name, update)
 
             # Set start time for next phase when verbose
-            if verbose:
+            if verbose >= 1:
                 next_phase = _get_next_phase(node_name)
                 if next_phase:
                     phase_start_time[next_phase] = current_time
@@ -160,11 +160,11 @@ def _stream_with_progress(
 
                 if decision == "continue":
                     status.update("  ⟳ literature...")
-                    if verbose:
+                    if verbose >= 1:
                         phase_start_time["literature"] = current_time
                 elif decision == "human_review":
                     status.update("  ⟳ human_review...")
-                    if verbose:
+                    if verbose >= 1:
                         phase_start_time["human_review"] = current_time
                 # "stop" → stream will end after this node
 
@@ -193,8 +193,9 @@ def main() -> None:
     )
     parser.add_argument(
         "--verbose", "-v",
-        action="store_true",
-        help="Print each agent's raw output and execution timing as it completes",
+        action="count",
+        default=0,
+        help="Print each agent's raw output and execution timing as it completes. Use -vv for real-time hypothesis streaming",
     )
     parser.add_argument(
         "--output-dir",
@@ -223,6 +224,7 @@ def main() -> None:
     initial_state: dict[str, object] = {
         "topic": args.topic,
         "max_iterations": args.iterations,
+        "verbose_level": args.verbose,
         "iteration": 0,
         "hypotheses": [],
         "literature_context": [],
@@ -269,7 +271,7 @@ def main() -> None:
         console.print()
 
     # Show total execution time when verbose
-    if args.verbose:
+    if args.verbose >= 1:
         total_time = time.time() - start_time
         console.print(f"\n[bold green]Total execution time: {total_time:.2f}s[/bold green]")
 

@@ -19,6 +19,7 @@ class ResearchState(TypedDict):
     # --- Core inputs (set once by CLI / human) ---
     topic: str
     max_iterations: int
+    verbose_level: int               # 0=no verbosity, 1=verbose, 2=super verbose
 
     # --- Iteration tracking ---
     iteration: int

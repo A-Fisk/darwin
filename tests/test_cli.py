@@ -97,7 +97,7 @@ class TestStreamWithProgressVerbose:
         ]
         graph = self._make_graph(events)
         with patch("darwin.cli._print_verbose_output") as mock_print_verbose:
-            _stream_with_progress(graph, {}, {}, max_iterations=3, verbose=True)
+            _stream_with_progress(graph, {}, {}, max_iterations=3, verbose=1)
         mock_print_verbose.assert_called_once_with(
             "supervisor", {"iteration": 1, "supervisor_decision": "stop"}
         )
@@ -108,7 +108,7 @@ class TestStreamWithProgressVerbose:
         ]
         graph = self._make_graph(events)
         with patch("darwin.cli._print_verbose_output") as mock_print_verbose:
-            _stream_with_progress(graph, {}, {}, max_iterations=3, verbose=False)
+            _stream_with_progress(graph, {}, {}, max_iterations=3, verbose=0)
         mock_print_verbose.assert_not_called()
 
     def test_internal_events_skipped(self) -> None:
@@ -118,7 +118,7 @@ class TestStreamWithProgressVerbose:
         ]
         graph = self._make_graph(events)
         with patch("darwin.cli._print_verbose_output") as mock_print_verbose:
-            _stream_with_progress(graph, {}, {}, max_iterations=3, verbose=True)
+            _stream_with_progress(graph, {}, {}, max_iterations=3, verbose=1)
         # __start__ should be skipped; only supervisor should trigger verbose output
         mock_print_verbose.assert_called_once()
         assert mock_print_verbose.call_args[0][0] == "supervisor"
@@ -141,7 +141,7 @@ class TestMainVerboseArg:
                         main()
         mock_stream.assert_called_once()
         _, kwargs = mock_stream.call_args
-        assert kwargs.get("verbose") is True
+        assert kwargs.get("verbose") == 1
 
     def test_verbose_short_flag_accepted(self) -> None:
         """-v short flag should be accepted by the CLI parser without error."""
@@ -159,10 +159,10 @@ class TestMainVerboseArg:
                         main()
         mock_stream.assert_called_once()
         _, kwargs = mock_stream.call_args
-        assert kwargs.get("verbose") is True
+        assert kwargs.get("verbose") == 1
 
-    def test_default_verbose_is_false(self) -> None:
-        """verbose should default to False when flag is not provided."""
+    def test_default_verbose_is_zero(self) -> None:
+        """verbose should default to 0 when flag is not provided."""
         with patch("sys.argv", ["darwin", "test topic"]):
             with patch("darwin.cli._stream_with_progress") as mock_stream:
                 mock_stream.return_value = None
@@ -177,7 +177,44 @@ class TestMainVerboseArg:
                         main()
         mock_stream.assert_called_once()
         _, kwargs = mock_stream.call_args
-        assert kwargs.get("verbose") is False
+        assert kwargs.get("verbose") == 0
+
+
+    def test_double_verbose_flag_accepted(self) -> None:
+        """-vv double flag should be accepted by the CLI parser for super verbose mode."""
+        with patch("sys.argv", ["darwin", "test topic", "-vv"]):
+            with patch("darwin.cli._stream_with_progress") as mock_stream:
+                mock_stream.return_value = None
+                with patch("darwin.graph.build_graph") as mock_build:
+                    mock_graph = MagicMock()
+                    mock_graph.stream.return_value = iter([])
+                    mock_graph.get_state.return_value = MagicMock(
+                        tasks=[], values={"final_hypotheses": [], "meta_review_notes": ""}
+                    )
+                    mock_build.return_value = mock_graph
+                    with patch("darwin.review.display_final_results"):
+                        main()
+        mock_stream.assert_called_once()
+        _, kwargs = mock_stream.call_args
+        assert kwargs.get("verbose") == 2
+
+    def test_verbose_verbose_flag_accepted(self) -> None:
+        """--verbose --verbose should be accepted by the CLI parser for super verbose mode."""
+        with patch("sys.argv", ["darwin", "test topic", "--verbose", "--verbose"]):
+            with patch("darwin.cli._stream_with_progress") as mock_stream:
+                mock_stream.return_value = None
+                with patch("darwin.graph.build_graph") as mock_build:
+                    mock_graph = MagicMock()
+                    mock_graph.stream.return_value = iter([])
+                    mock_graph.get_state.return_value = MagicMock(
+                        tasks=[], values={"final_hypotheses": [], "meta_review_notes": ""}
+                    )
+                    mock_build.return_value = mock_graph
+                    with patch("darwin.review.display_final_results"):
+                        main()
+        mock_stream.assert_called_once()
+        _, kwargs = mock_stream.call_args
+        assert kwargs.get("verbose") == 2
 
 
 class TestMainOutputDirArg:

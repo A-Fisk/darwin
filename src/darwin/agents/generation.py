@@ -99,17 +99,20 @@ def run(state: ResearchState) -> dict[str, object]:
         items: list[dict[str, object]] = parse_json_response(message)  # type: ignore[assignment]
 
         iteration = state["iteration"]
+        verbose_level = state.get("verbose_level", 0)
         new_hypotheses: list[Hypothesis] = []
-        for i, item in enumerate(items[:NEW_PER_ITERATION]):
-            progress.update(task, advance=0, description=f"[cyan]Creating hypothesis {i+1}/{NEW_PER_ITERATION}...")
+        for i, item in enumerate(items[:NEW_PER_ITERATION], 1):
+            progress.update(task, advance=0, description=f"[cyan]Creating hypothesis {i}/{NEW_PER_ITERATION}...")
             refs: list[str] = []
             raw_refs = item.get("references", [])
             if isinstance(raw_refs, list):
                 refs = [str(r) for r in raw_refs]
+
+            hypothesis_text = str(item["text"])
             new_hypotheses.append(
                 Hypothesis(
                     id=uuid.uuid4().hex[:8],
-                    text=str(item["text"]),
+                    text=hypothesis_text,
                     score=0.5,
                     reflections=[],
                     generation=iteration,
@@ -117,6 +120,10 @@ def run(state: ResearchState) -> dict[str, object]:
                     references=refs,
                 )
             )
+
+            # Stream hypothesis immediately in super verbose mode
+            if verbose_level >= 2:
+                print_safe(f"  [green]✓ H{i}:[/green] {hypothesis_text}")
 
         progress.update(task, advance=0.5, description=f"[cyan]Generated {len(new_hypotheses)} hypotheses!")
         progress.update(task, completed=1)

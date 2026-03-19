@@ -14,8 +14,10 @@ def _make_state(**kwargs) -> ResearchState:
     defaults: ResearchState = {
         "topic": "test topic",
         "max_iterations": 5,
+        "verbose_level": 0,
         "iteration": 1,
         "hypotheses": [],
+        "literature_context": [],
         "ranked_ids": [],
         "top_hypotheses": [],
         "proximity_clusters": [],
@@ -113,3 +115,37 @@ class TestGenerationRun:
             # The user message content should reference "prior hyp"
             user_msg = call_kwargs[1]["messages"][0]["content"]
             assert "prior hyp" in user_msg
+
+    def test_super_verbose_streams_hypotheses(self, capsys) -> None:
+        """Super verbose mode (verbose_level >= 2) should stream hypotheses as they're processed."""
+        payload = json.dumps([
+            {"text": "First hypothesis"},
+            {"text": "Second hypothesis"},
+        ])
+        with patch("darwin.agents.generation.anthropic.Anthropic") as MockClient:
+            MockClient.return_value.messages.create.return_value = _mock_message(payload)
+            generation.run(_make_state(verbose_level=2))
+
+        out = capsys.readouterr().out
+        assert "✓ H1: First hypothesis" in out
+        assert "✓ H2: Second hypothesis" in out
+
+    def test_verbose_mode_does_not_stream_hypotheses(self, capsys) -> None:
+        """Regular verbose mode (verbose_level = 1) should not stream hypotheses."""
+        payload = json.dumps([{"text": "A hypothesis"}])
+        with patch("darwin.agents.generation.anthropic.Anthropic") as MockClient:
+            MockClient.return_value.messages.create.return_value = _mock_message(payload)
+            generation.run(_make_state(verbose_level=1))
+
+        out = capsys.readouterr().out
+        assert "✓ H1:" not in out
+
+    def test_no_verbose_mode_does_not_stream_hypotheses(self, capsys) -> None:
+        """No verbose mode (verbose_level = 0) should not stream hypotheses."""
+        payload = json.dumps([{"text": "A hypothesis"}])
+        with patch("darwin.agents.generation.anthropic.Anthropic") as MockClient:
+            MockClient.return_value.messages.create.return_value = _mock_message(payload)
+            generation.run(_make_state(verbose_level=0))
+
+        out = capsys.readouterr().out
+        assert "✓ H1:" not in out

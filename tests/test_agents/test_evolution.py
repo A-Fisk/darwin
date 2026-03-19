@@ -14,8 +14,10 @@ def _make_state(**kwargs) -> ResearchState:
     defaults: ResearchState = {
         "topic": "test topic",
         "max_iterations": 5,
+        "verbose_level": 0,
         "iteration": 2,
         "hypotheses": [],
+        "literature_context": [],
         "ranked_ids": [],
         "top_hypotheses": [],
         "proximity_clusters": [],
@@ -132,3 +134,43 @@ class TestEvolutionRun:
             result = evolution.run(_make_state(top_hypotheses=parents))
 
         assert len(result["hypotheses"]) == EVOLVED_PER_ITERATION  # type: ignore[arg-type]
+
+    def test_super_verbose_streams_evolved_hypotheses(self, capsys) -> None:
+        """Super verbose mode (verbose_level >= 2) should stream evolved hypotheses as they're processed."""
+        parents = [_hyp("p1")]
+        items = [
+            {"text": "First evolved hypothesis", "parent_id": "p1"},
+            {"text": "Second evolved hypothesis", "parent_id": "p1"},
+        ]
+        payload = json.dumps(items)
+        with patch("darwin.agents.evolution.anthropic.Anthropic") as MockClient:
+            MockClient.return_value.messages.create.return_value = _mock_message(payload)
+            evolution.run(_make_state(top_hypotheses=parents, verbose_level=2))
+
+        out = capsys.readouterr().out
+        assert "✓ E1: First evolved hypothesis" in out
+        assert "✓ E2: Second evolved hypothesis" in out
+
+    def test_verbose_mode_does_not_stream_evolved_hypotheses(self, capsys) -> None:
+        """Regular verbose mode (verbose_level = 1) should not stream evolved hypotheses."""
+        parents = [_hyp("p1")]
+        items = [{"text": "An evolved hypothesis", "parent_id": "p1"}]
+        payload = json.dumps(items)
+        with patch("darwin.agents.evolution.anthropic.Anthropic") as MockClient:
+            MockClient.return_value.messages.create.return_value = _mock_message(payload)
+            evolution.run(_make_state(top_hypotheses=parents, verbose_level=1))
+
+        out = capsys.readouterr().out
+        assert "✓ E1:" not in out
+
+    def test_no_verbose_mode_does_not_stream_evolved_hypotheses(self, capsys) -> None:
+        """No verbose mode (verbose_level = 0) should not stream evolved hypotheses."""
+        parents = [_hyp("p1")]
+        items = [{"text": "An evolved hypothesis", "parent_id": "p1"}]
+        payload = json.dumps(items)
+        with patch("darwin.agents.evolution.anthropic.Anthropic") as MockClient:
+            MockClient.return_value.messages.create.return_value = _mock_message(payload)
+            evolution.run(_make_state(top_hypotheses=parents, verbose_level=0))
+
+        out = capsys.readouterr().out
+        assert "✓ E1:" not in out

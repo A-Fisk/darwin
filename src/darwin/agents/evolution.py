@@ -65,19 +65,22 @@ def run(state: ResearchState) -> dict[str, object]:
         items: list[dict[str, str]] = parse_json_response(message)  # type: ignore[assignment]
 
         iteration = state["iteration"]
+        verbose_level = state.get("verbose_level", 0)
         parent_ids = {h["id"] for h in parents}
 
         evolved: list[Hypothesis] = []
-        for i, item in enumerate(items[:EVOLVED_PER_ITERATION]):
-            progress.update(task, advance=0, description=f"[cyan]Creating evolved hypothesis {i+1}/{EVOLVED_PER_ITERATION}...")
+        for i, item in enumerate(items[:EVOLVED_PER_ITERATION], 1):
+            progress.update(task, advance=0, description=f"[cyan]Creating evolved hypothesis {i}/{EVOLVED_PER_ITERATION}...")
             parent_id = item.get("parent_id")
             # Validate parent_id exists; fall back to first parent
             if parent_id not in parent_ids:
                 parent_id = parents[0]["id"]
+
+            hypothesis_text = item["text"]
             evolved.append(
                 Hypothesis(
                     id=uuid.uuid4().hex[:8],
-                    text=item["text"],
+                    text=hypothesis_text,
                     score=0.5,
                     reflections=[],
                     generation=iteration,
@@ -85,6 +88,10 @@ def run(state: ResearchState) -> dict[str, object]:
                     references=[],
                 )
             )
+
+            # Stream evolved hypothesis immediately in super verbose mode
+            if verbose_level >= 2:
+                print_safe(f"  [green]✓ E{i}:[/green] {hypothesis_text}")
 
         progress.update(task, advance=0.5, description=f"[cyan]Generated {len(evolved)} evolved hypotheses!")
         progress.update(task, completed=1)
