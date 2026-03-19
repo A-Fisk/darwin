@@ -86,17 +86,25 @@ def run(state: ResearchState) -> dict[str, object]:
                     ),
                 }
             )
-    except httpx.HTTPError:
-        # Network failure — continue without literature context rather than crashing
+    except httpx.HTTPError as exc:
+        # Network/HTTP failure (incl. 429 rate limit) — continue without literature context
         papers = []
+        error_note = str(exc)
+    except Exception as exc:
+        # JSON decode error or other unexpected failure
+        papers = []
+        error_note = str(exc)
+    else:
+        error_note = ""
 
+    error_suffix = f"; error: {error_note}" if error_note else ""
     return {
         "literature_context": papers,
         "messages": [
             {
                 "role": "agent",
                 "agent": "literature",
-                "content": f"fetched {len(papers)} papers for topic: {topic!r}",
+                "content": f"fetched {len(papers)} papers (query: {query!r}){error_suffix}",
             }
         ],
     }
