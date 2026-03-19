@@ -52,7 +52,9 @@ def _print_verbose_output(node_name: str, update: dict[str, object]) -> None:
 
         # Show search keywords prominently in verbose mode
         if query:
-            console.print(f"    [bold]Searching literature with keywords:[/bold] [cyan]{query}[/cyan]")
+            console.print(
+                f"    [bold]Searching literature with keywords:[/bold] [cyan]{query}[/cyan]"
+            )
 
         if papers:
             console.print(f"    [dim]fetched {len(papers)} papers[/dim]")

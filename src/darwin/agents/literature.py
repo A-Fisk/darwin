@@ -224,10 +224,10 @@ def run(state: ResearchState) -> dict[str, object]:
 
     topic = state["topic"]
 
-    with progress_context(f"Fetching literature for research topic") as progress:
-        task = progress.add_task(f"[cyan]Fetching papers", total=1)
+    with progress_context("Fetching literature for research topic") as progress:
+        task = progress.add_task("[cyan]Fetching papers", total=1)
 
-        progress.update(task, advance=0, description=f"[cyan]Distilling search query from topic...")
+        progress.update(task, advance=0, description="[cyan]Distilling search query from topic...")
         query = _distil_query(topic)
 
         papers: list[dict[str, str]] | None = None
@@ -235,7 +235,7 @@ def run(state: ResearchState) -> dict[str, object]:
         error_note = ""
 
         # Attempt 1: Semantic Scholar
-        progress.update(task, advance=0.2, description=f"[cyan]Searching Semantic Scholar...")
+        progress.update(task, advance=0.2, description="[cyan]Searching Semantic Scholar...")
         try:
             papers = _fetch_semantic_scholar(query)
             source = "semantic_scholar"
@@ -244,7 +244,9 @@ def run(state: ResearchState) -> dict[str, object]:
 
         # Fallback 1: PubMed
         if papers is None:
-            progress.update(task, advance=0.4, description=f"[cyan]Semantic Scholar failed, trying PubMed...")
+            progress.update(
+                task, advance=0.4, description="[cyan]Semantic Scholar failed, trying PubMed..."
+            )
             try:
                 papers = _fetch_pubmed(query)
                 source = "pubmed"
@@ -254,7 +256,7 @@ def run(state: ResearchState) -> dict[str, object]:
 
         # Fallback 2: arXiv
         if papers is None:
-            progress.update(task, advance=0.7, description=f"[cyan]PubMed failed, trying arXiv...")
+            progress.update(task, advance=0.7, description="[cyan]PubMed failed, trying arXiv...")
             try:
                 papers = _fetch_arxiv(query)
                 source = "arxiv"
@@ -263,7 +265,9 @@ def run(state: ResearchState) -> dict[str, object]:
                 error_note = str(exc)
                 papers = []
 
-        progress.update(task, advance=1.0, description=f"[cyan]Fetched {len(papers)} papers from {source}!")
+        progress.update(
+            task, advance=1.0, description=f"[cyan]Fetched {len(papers)} papers from {source}!"
+        )
         progress.update(task, completed=1)
 
     error_suffix = f"; error: {error_note}" if error_note else ""
