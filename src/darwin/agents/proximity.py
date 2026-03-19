@@ -5,7 +5,7 @@ import anthropic
 
 from darwin.agents._common import latest_hypotheses, parse_json_response
 from darwin.config import MAX_TOKENS_DETAILED
-from darwin.console import print_safe
+from darwin.console import print_safe, progress_context
 from darwin.state import ResearchState
 
 _SYSTEM = """\
@@ -32,34 +32,43 @@ def run(state: ResearchState) -> dict[str, object]:
             ],
         }
 
-    print_safe(f"  [cyan]Clustering {len(pool)} hypotheses by semantic similarity...[/cyan]")
+    with progress_context(f"Clustering {len(pool)} hypotheses by semantic similarity") as progress:
+        task = progress.add_task(f"[cyan]Clustering hypotheses", total=1)
 
-    hypotheses_text = "\n".join(
-        f'ID: {h["id"]} — {h["text"]}' for h in pool
-    )
-    prompt = (
-        f"Topic: {state['topic']}\n\n"
-        f"Hypotheses:\n{hypotheses_text}\n\n"
-        f"Group these {len(pool)} hypotheses into semantic clusters."
-    )
+        hypotheses_text = "\n".join(
+            f'ID: {h["id"]} — {h["text"]}' for h in pool
+        )
+        prompt = (
+            f"Topic: {state['topic']}\n\n"
+            f"Hypotheses:\n{hypotheses_text}\n\n"
+            f"Group these {len(pool)} hypotheses into semantic clusters."
+        )
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=MAX_TOKENS_DETAILED,
-        system=_SYSTEM,
-        messages=[
-            {"role": "user", "content": prompt},
-        ],
-    )
+        progress.update(task, advance=0, description=f"[cyan]Requesting semantic clustering from Claude...")
 
-    clusters: list[list[str]] = parse_json_response(message)  # type: ignore[assignment]
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=MAX_TOKENS_DETAILED,
+            system=_SYSTEM,
+            messages=[
+                {"role": "user", "content": prompt},
+            ],
+        )
 
-    # Validate: ensure all IDs are accounted for
-    all_ids = {h["id"] for h in pool}
-    clustered_ids = {hid for cluster in clusters for hid in cluster}
-    unclustered = all_ids - clustered_ids
-    if unclustered:
-        clusters.append(list(unclustered))
+        progress.update(task, advance=0.5, description=f"[cyan]Parsing clustering results...")
+
+        clusters: list[list[str]] = parse_json_response(message)  # type: ignore[assignment]
+
+        # Validate: ensure all IDs are accounted for
+        all_ids = {h["id"] for h in pool}
+        clustered_ids = {hid for cluster in clusters for hid in cluster}
+        unclustered = all_ids - clustered_ids
+        if unclustered:
+            clusters.append(list(unclustered))
+            progress.update(task, advance=0, description=f"[cyan]Added {len(unclustered)} unclustered hypotheses...")
+
+        progress.update(task, advance=0.5, description=f"[cyan]Formed {len(clusters)} semantic clusters!")
+        progress.update(task, completed=1)
 
     print_safe(f"  [green]✓[/green] Formed {len(clusters)} clusters")
 

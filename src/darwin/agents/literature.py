@@ -9,6 +9,7 @@ import anthropic
 import httpx
 
 from darwin.config import MAX_TOKENS_SIMPLE
+from darwin.console import progress_context
 from darwin.state import ResearchState
 
 _SEMANTIC_SCHOLAR_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
@@ -222,37 +223,48 @@ def run(state: ResearchState) -> dict[str, object]:
         }
 
     topic = state["topic"]
-    query = _distil_query(topic)
 
-    papers: list[dict[str, str]] | None = None
-    source = "semantic_scholar"
-    error_note = ""
+    with progress_context(f"Fetching literature for research topic") as progress:
+        task = progress.add_task(f"[cyan]Fetching papers", total=1)
 
-    # Attempt 1: Semantic Scholar
-    try:
-        papers = _fetch_semantic_scholar(query)
+        progress.update(task, advance=0, description=f"[cyan]Distilling search query from topic...")
+        query = _distil_query(topic)
+
+        papers: list[dict[str, str]] | None = None
         source = "semantic_scholar"
-    except Exception as exc:
-        error_note = str(exc)
+        error_note = ""
 
-    # Fallback 1: PubMed
-    if papers is None:
+        # Attempt 1: Semantic Scholar
+        progress.update(task, advance=0.2, description=f"[cyan]Searching Semantic Scholar...")
         try:
-            papers = _fetch_pubmed(query)
-            source = "pubmed"
-            error_note = ""
+            papers = _fetch_semantic_scholar(query)
+            source = "semantic_scholar"
         except Exception as exc:
             error_note = str(exc)
 
-    # Fallback 2: arXiv
-    if papers is None:
-        try:
-            papers = _fetch_arxiv(query)
-            source = "arxiv"
-            error_note = ""
-        except Exception as exc:
-            error_note = str(exc)
-            papers = []
+        # Fallback 1: PubMed
+        if papers is None:
+            progress.update(task, advance=0.4, description=f"[cyan]Semantic Scholar failed, trying PubMed...")
+            try:
+                papers = _fetch_pubmed(query)
+                source = "pubmed"
+                error_note = ""
+            except Exception as exc:
+                error_note = str(exc)
+
+        # Fallback 2: arXiv
+        if papers is None:
+            progress.update(task, advance=0.7, description=f"[cyan]PubMed failed, trying arXiv...")
+            try:
+                papers = _fetch_arxiv(query)
+                source = "arxiv"
+                error_note = ""
+            except Exception as exc:
+                error_note = str(exc)
+                papers = []
+
+        progress.update(task, advance=1.0, description=f"[cyan]Fetched {len(papers)} papers from {source}!")
+        progress.update(task, completed=1)
 
     error_suffix = f"; error: {error_note}" if error_note else ""
     return {

@@ -7,7 +7,7 @@ import anthropic
 
 from darwin.agents._common import latest_hypotheses, parse_json_response
 from darwin.config import NEW_PER_ITERATION, MAX_TOKENS_CREATIVE
-from darwin.console import print_safe
+from darwin.console import print_safe, progress_context
 from darwin.state import Hypothesis, ResearchState
 
 _SYSTEM_BASE = """\
@@ -51,65 +51,74 @@ def run(state: ResearchState) -> dict[str, object]:
         )
 
     lit_context: list[dict[str, str]] = state.get("literature_context") or []
-    print_safe(f"  [cyan]Generating {NEW_PER_ITERATION} new hypotheses...[/cyan]")
+    with progress_context(f"Generating {NEW_PER_ITERATION} new hypotheses") as progress:
+        task = progress.add_task(f"[cyan]Generating hypotheses", total=1)
 
-    if lit_context:
-        lit_lines = []
-        for p in lit_context:
-            pid = p.get("paper_id", "")
-            title = p.get("title", "")
-            abstract = p.get("abstract", "")
-            authors = p.get("authors", "")
-            lit_lines.append(
-                f"[{pid}] {title} ({authors})\n  Abstract: {abstract}"
+        if lit_context:
+            lit_lines = []
+            for p in lit_context:
+                pid = p.get("paper_id", "")
+                title = p.get("title", "")
+                abstract = p.get("abstract", "")
+                authors = p.get("authors", "")
+                lit_lines.append(
+                    f"[{pid}] {title} ({authors})\n  Abstract: {abstract}"
+                )
+            lit_block = (
+                "\n\nRelevant literature (cite paper_ids in your references):\n"
+                + "\n\n".join(lit_lines)
             )
-        lit_block = (
-            "\n\nRelevant literature (cite paper_ids in your references):\n"
-            + "\n\n".join(lit_lines)
-        )
-        system = _SYSTEM_BASE.format(n=NEW_PER_ITERATION)
-        prompt = (
-            f"Research topic: {state['topic']}{context}{lit_block}\n\n"
-            f"Generate {NEW_PER_ITERATION} new, distinct hypotheses that extend, "
-            f"challenge, or synthesise from the retrieved papers — not just rehash them. "
-            f"Cite paper_ids that support each hypothesis."
-        )
-    else:
-        system = _SYSTEM_NO_LIT.format(n=NEW_PER_ITERATION)
-        prompt = (
-            f"Research topic: {state['topic']}{context}\n\n"
-            f"Generate {NEW_PER_ITERATION} new, distinct hypotheses."
-        )
-
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=MAX_TOKENS_CREATIVE,
-        system=system,
-        messages=[
-            {"role": "user", "content": prompt},
-        ],
-    )
-
-    items: list[dict[str, object]] = parse_json_response(message)  # type: ignore[assignment]
-
-    iteration = state["iteration"]
-    new_hypotheses: list[Hypothesis] = []
-    for item in items[:NEW_PER_ITERATION]:
-        refs: list[str] = []
-        raw_refs = item.get("references", [])
-        if isinstance(raw_refs, list):
-            refs = [str(r) for r in raw_refs]
-        new_hypotheses.append(
-            Hypothesis(
-                id=uuid.uuid4().hex[:8],
-                text=str(item["text"]),
-                score=0.5,
-                reflections=[],
-                generation=iteration,
-                evolved_from=None,
-                references=refs,
+            system = _SYSTEM_BASE.format(n=NEW_PER_ITERATION)
+            prompt = (
+                f"Research topic: {state['topic']}{context}{lit_block}\n\n"
+                f"Generate {NEW_PER_ITERATION} new, distinct hypotheses that extend, "
+                f"challenge, or synthesise from the retrieved papers — not just rehash them. "
+                f"Cite paper_ids that support each hypothesis."
             )
+        else:
+            system = _SYSTEM_NO_LIT.format(n=NEW_PER_ITERATION)
+            prompt = (
+                f"Research topic: {state['topic']}{context}\n\n"
+                f"Generate {NEW_PER_ITERATION} new, distinct hypotheses."
+            )
+
+        progress.update(task, advance=0, description=f"[cyan]Requesting {NEW_PER_ITERATION} hypotheses from Claude...")
+
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=MAX_TOKENS_CREATIVE,
+            system=system,
+            messages=[
+                {"role": "user", "content": prompt},
+            ],
         )
+
+        progress.update(task, advance=0.5, description=f"[cyan]Parsing response and creating hypothesis objects...")
+
+        items: list[dict[str, object]] = parse_json_response(message)  # type: ignore[assignment]
+
+        iteration = state["iteration"]
+        new_hypotheses: list[Hypothesis] = []
+        for i, item in enumerate(items[:NEW_PER_ITERATION]):
+            progress.update(task, advance=0, description=f"[cyan]Creating hypothesis {i+1}/{NEW_PER_ITERATION}...")
+            refs: list[str] = []
+            raw_refs = item.get("references", [])
+            if isinstance(raw_refs, list):
+                refs = [str(r) for r in raw_refs]
+            new_hypotheses.append(
+                Hypothesis(
+                    id=uuid.uuid4().hex[:8],
+                    text=str(item["text"]),
+                    score=0.5,
+                    reflections=[],
+                    generation=iteration,
+                    evolved_from=None,
+                    references=refs,
+                )
+            )
+
+        progress.update(task, advance=0.5, description=f"[cyan]Generated {len(new_hypotheses)} hypotheses!")
+        progress.update(task, completed=1)
 
     print_safe(f"  [green]✓[/green] Generated {len(new_hypotheses)} hypotheses")
 
