@@ -84,11 +84,10 @@ def run(state: ResearchState) -> dict[str, object]:
         system=system,
         messages=[
             {"role": "user", "content": prompt},
-            {"role": "assistant", "content": "["},
         ],
     )
 
-    items: list[dict[str, object]] = parse_json_response(message, prefill="[")  # type: ignore[assignment]
+    items: list[dict[str, object]] = parse_json_response(message)  # type: ignore[assignment]
 
     iteration = state["iteration"]
     new_hypotheses: list[Hypothesis] = []

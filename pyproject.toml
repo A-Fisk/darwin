@@ -20,8 +20,8 @@ darwin = "darwin.cli:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/darwin"]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=8.0",
     "mypy>=1.9",
     "ruff>=0.4",
