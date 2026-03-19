@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env uv run python
 """Test to verify optimization strategies are working correctly."""
 from unittest.mock import MagicMock, patch
 import json
