@@ -49,10 +49,13 @@ def run(state: ResearchState) -> dict[str, object]:
         model="claude-sonnet-4-6",
         max_tokens=4096,
         system=_SYSTEM.format(n=EVOLVED_PER_ITERATION),
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {"role": "user", "content": prompt},
+            {"role": "assistant", "content": "["},
+        ],
     )
 
-    items: list[dict[str, str]] = parse_json_response(message)  # type: ignore[assignment]
+    items: list[dict[str, str]] = parse_json_response(message, prefill="[")  # type: ignore[assignment]
 
     iteration = state["iteration"]
     parent_ids = {h["id"] for h in parents}

@@ -61,9 +61,12 @@ def run(state: ResearchState) -> dict[str, object]:
         model="claude-sonnet-4-6",
         max_tokens=64,
         system=_SYSTEM,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {"role": "user", "content": prompt},
+            {"role": "assistant", "content": "{"},
+        ],
     )
-    result: dict[str, str] = parse_json_response(message)  # type: ignore[assignment]
+    result: dict[str, str] = parse_json_response(message, prefill="{")  # type: ignore[assignment]
     decision = result.get("decision", prior_decision)
     if decision not in ("continue", "stop", "human_review"):
         decision = prior_decision

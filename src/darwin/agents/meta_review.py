@@ -43,12 +43,15 @@ def run(state: ResearchState) -> dict[str, object]:
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=1024,
+        max_tokens=256,
         system=_SYSTEM,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {"role": "user", "content": prompt},
+            {"role": "assistant", "content": "{"},
+        ],
     )
 
-    result: dict[str, str] = parse_json_response(message)  # type: ignore[assignment]
+    result: dict[str, str] = parse_json_response(message, prefill="{")  # type: ignore[assignment]
     decision = result.get("decision", "continue")
     if decision not in ("continue", "stop", "human_review"):
         decision = "continue"

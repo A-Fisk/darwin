@@ -82,10 +82,13 @@ def run(state: ResearchState) -> dict[str, object]:
         model="claude-sonnet-4-6",
         max_tokens=4096,
         system=system,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {"role": "user", "content": prompt},
+            {"role": "assistant", "content": "["},
+        ],
     )
 
-    items: list[dict[str, object]] = parse_json_response(message)  # type: ignore[assignment]
+    items: list[dict[str, object]] = parse_json_response(message, prefill="[")  # type: ignore[assignment]
 
     iteration = state["iteration"]
     new_hypotheses: list[Hypothesis] = []

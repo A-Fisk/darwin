@@ -32,7 +32,8 @@ def _make_state(**kwargs) -> ResearchState:
 def _mock_message(text: str) -> MagicMock:
     msg = MagicMock()
     msg.stop_reason = "end_turn"
-    msg.content = [MagicMock(type="text", text=text)]
+    # Agents use assistant prefill, so the model returns text AFTER the first character
+    msg.content = [MagicMock(type="text", text=text[1:] if text else text)]
     return msg
 
 

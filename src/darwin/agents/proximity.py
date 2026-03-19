@@ -43,10 +43,13 @@ def run(state: ResearchState) -> dict[str, object]:
         model="claude-sonnet-4-6",
         max_tokens=512,
         system=_SYSTEM,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {"role": "user", "content": prompt},
+            {"role": "assistant", "content": "["},
+        ],
     )
 
-    clusters: list[list[str]] = parse_json_response(message)  # type: ignore[assignment]
+    clusters: list[list[str]] = parse_json_response(message, prefill="[")  # type: ignore[assignment]
 
     # Validate: ensure all IDs are accounted for
     all_ids = {h["id"] for h in pool}
