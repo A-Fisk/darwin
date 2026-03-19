@@ -64,14 +64,13 @@ def run(state: ResearchState) -> dict[str, object]:
         prompt = f"Topic: {state['topic']}\nHypothesis: {hyp['text']}{lit_note}"
         message = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=256,
+            max_tokens=512,
             system=system,
             messages=[
                 {"role": "user", "content": prompt},
-                {"role": "assistant", "content": "{"},
             ],
         )
-        result: dict[str, object] = parse_json_response(message, prefill="{")  # type: ignore[assignment]
+        result: dict[str, object] = parse_json_response(message)  # type: ignore[assignment]
         updated.append(
             Hypothesis(
                 id=hyp["id"],
