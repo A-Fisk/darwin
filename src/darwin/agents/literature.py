@@ -1,6 +1,9 @@
 """Literature agent — fetches relevant papers from Semantic Scholar."""
 from __future__ import annotations
 
+import random
+import time
+
 import anthropic
 import httpx
 
@@ -56,13 +59,38 @@ def run(state: ResearchState) -> dict[str, object]:
     query = _distil_query(topic)
     papers: list[dict[str, str]] = []
 
+    _MAX_RETRIES = 3
+    _BASE_DELAY = 1.0  # seconds
+
+    response = None
+    fetch_exc: Exception | None = None
+    for attempt in range(_MAX_RETRIES + 1):
+        fetch_exc = None
+        try:
+            response = httpx.get(
+                _API_URL,
+                params={"query": query, "limit": _TOP_N, "fields": _FIELDS},
+                timeout=15.0,
+            )
+            if response.status_code == 429 or response.status_code >= 500:
+                if attempt < _MAX_RETRIES:
+                    delay = _BASE_DELAY * (2**attempt) + random.uniform(0, 0.5)
+                    time.sleep(delay)
+                    continue
+                response.raise_for_status()
+            response.raise_for_status()
+            break  # success
+        except httpx.HTTPError as exc:
+            fetch_exc = exc
+            if attempt < _MAX_RETRIES:
+                delay = _BASE_DELAY * (2**attempt) + random.uniform(0, 0.5)
+                time.sleep(delay)
+
     try:
-        response = httpx.get(
-            _API_URL,
-            params={"query": query, "limit": _TOP_N, "fields": _FIELDS},
-            timeout=15.0,
-        )
-        response.raise_for_status()
+        if fetch_exc is not None:
+            raise fetch_exc
+        if response is None:
+            raise RuntimeError("No response received")
         data = response.json()
 
         for item in data.get("data", []):
