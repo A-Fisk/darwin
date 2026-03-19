@@ -243,7 +243,11 @@ class TestMainVerboseArg:
 class TestMainOutputDirArg:
     def _run_main(self, argv: list[str], state_values: dict | None = None) -> MagicMock:
         if state_values is None:
-            state_values = {"final_hypotheses": [], "meta_review_notes": "", "literature_context": []}
+            state_values = {
+                "final_hypotheses": [],
+                "meta_review_notes": "",
+                "literature_context": []
+            }
         with patch("sys.argv", argv):
             with patch("darwin.cli._stream_with_progress"):
                 with patch("darwin.graph.build_graph") as mock_build:
