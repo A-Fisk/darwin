@@ -128,6 +128,97 @@ def _tex_escape(text: str) -> str:
     return text
 
 
+def _add_inline_citations(
+    hypothesis_text: str,
+    references: list[str],
+    id_to_key: dict[str, str],
+    literature_context: list[dict[str, str]],
+) -> str:
+    """Add in-text citations to hypothesis text where claims are made.
+
+    Analyzes the hypothesis text and inserts appropriate citations where
+    evidence is likely referenced or claims are made.
+    """
+    if not references or not id_to_key:
+        return _tex_escape(hypothesis_text)
+
+    # Get available cite keys for this hypothesis
+    cite_keys = [id_to_key[pid] for pid in references if pid in id_to_key]
+    if not cite_keys:
+        return _tex_escape(hypothesis_text)
+
+    # Build a mapping of paper topics/keywords to cite keys
+    paper_keywords = {}
+    for paper in literature_context:
+        if paper.get("paper_id") in references:
+            key = id_to_key.get(paper.get("paper_id", ""))
+            if key:
+                # Extract keywords from title
+                title_words = paper.get("title", "").lower().split()
+                for word in title_words:
+                    # Clean word and add to mapping
+                    clean_word = re.sub(r'[^\w]', '', word)
+                    if len(clean_word) > 3:  # Only meaningful words
+                        paper_keywords[clean_word] = key
+
+    # Split hypothesis into sentences
+    sentences = re.split(r'(?<=[.!?])\s+', hypothesis_text.strip())
+    processed_sentences = []
+
+    for sentence in sentences:
+        if not sentence.strip():
+            continue
+
+        # Check if sentence contains claims that warrant citation
+        sentence_lower = sentence.lower()
+
+        # Heuristics for where to add citations:
+        claim_indicators = [
+            r'\b(recent|studies?|research|findings?|evidence|shows?|demonstrates?|indicates?|suggests?|reports?)\b',
+            r'\b(advances?|developments?|improvements?|breakthroughs?)\b',
+            r'\b(according to|based on|as shown)\b',
+            r'\b(machine learning|deep learning|neural networks?|algorithms?)\b',
+            r'\b(protein folding|prediction|accuracy|performance)\b',
+        ]
+
+        has_claim = any(re.search(pattern, sentence_lower) for pattern in claim_indicators)
+
+        # Try to match sentence content with paper keywords
+        best_cite_key = None
+        best_match_score = 0
+        for keyword, key in paper_keywords.items():
+            if keyword in sentence_lower:
+                # Score based on keyword length and specificity
+                match_score = len(keyword)
+                if match_score > best_match_score:
+                    best_match_score = match_score
+                    best_cite_key = key
+
+        # If no specific match, use first available citation for claimed sentences
+        if has_claim and not best_cite_key and cite_keys:
+            best_cite_key = cite_keys[0]
+
+        # Add citation to sentence if warranted
+        if best_cite_key and has_claim:
+            # Find a good spot to insert citation (end of sentence is safe)
+            sentence = sentence.rstrip()
+            if sentence.endswith('.'):
+                sentence = sentence[:-1] + f" CITATIONMARK{best_cite_key}CITATIONMARK."
+            else:
+                sentence = sentence + f" CITATIONMARK{best_cite_key}CITATIONMARK"
+
+        processed_sentences.append(sentence)
+
+    # Escape the text first, then replace citation markers with actual LaTeX commands
+    result = _tex_escape(" ".join(processed_sentences))
+
+    # Now replace the citation markers with proper LaTeX commands
+    # This avoids having the citation commands themselves escaped
+    result = re.sub(r'CITATIONMARK(\w+)CITATIONMARK', r'\\citep{\1}', result)
+
+    return result
+
+
 def generate_latex(
     hypotheses: list[dict[str, object]],
     literature_context: list[dict[str, str]],
@@ -168,7 +259,9 @@ def generate_latex(
 
         lines.append(rf"\section{{Hypothesis {i}}}")
         lines.append("")
-        lines.append(_tex_escape(text))
+        # Add in-text citations to the hypothesis text
+        text_with_citations = _add_inline_citations(text, refs, id_to_key, literature_context)
+        lines.append(text_with_citations)
         lines.append("")
 
         # Metadata

@@ -153,6 +153,41 @@ class TestGenerateLatex:
         assert "Generation 2" in tex
         assert "parent01" in tex
 
+    def test_in_text_citations_with_claims(self):
+        hyps = [self._make_hyp("Recent studies show that protein folding follows energy minimization.", refs=["abc123"])]
+        tex = generate_latex(hyps, [_PAPER_1], "topic", "")
+        # Should have in-text citation within the hypothesis text
+        assert "Recent studies show that protein folding follows energy minimization \\citep{Smith2022}." in tex
+        # Should also still have the references section
+        assert r"\textbf{References:} \citep{Smith2022}" in tex
+
+    def test_in_text_citations_keyword_matching(self):
+        hyps = [self._make_hyp("Machine learning advances and transformer models improve accuracy.", refs=["abc123", "def456"])]
+        # Create papers with distinct keywords
+        papers = [
+            _PAPER_1,  # Deep Learning for Protein Folding
+            {**_PAPER_2, "title": "Transformer Neural Networks"}  # Changed title for clearer keyword matching
+        ]
+        tex = generate_latex(hyps, papers, "topic", "")
+        # Should match "transformer" keyword to the second paper (Johnson2023)
+        assert "transformer models improve accuracy \\citep{Johnson2023}." in tex
+
+    def test_in_text_citations_no_claims(self):
+        hyps = [self._make_hyp("This is a simple statement without claims.", refs=["abc123"])]
+        tex = generate_latex(hyps, [_PAPER_1], "topic", "")
+        # Should not have in-text citations for non-claim sentences
+        assert "\\citep{" not in tex.split("\\textbf{References:}")[0]  # Before the References section
+        # But should still have the references section
+        assert r"\textbf{References:} \citep{Smith2022}" in tex
+
+    def test_in_text_citations_multiple_sentences(self):
+        hyps = [self._make_hyp("Recent research shows improvements. Furthermore, deep learning advances accuracy.", refs=["abc123"])]
+        tex = generate_latex(hyps, [_PAPER_1], "topic", "")
+        # Both sentences should get citations since they have claim indicators
+        hypothesis_section = tex.split("\\textbf{Score:}")[0]  # Get hypothesis text only
+        citation_count = hypothesis_section.count("\\citep{Smith2022}")
+        assert citation_count == 2
+
     def test_latex_escaping(self):
         hyps = [self._make_hyp("Costs $100 & more.")]
         tex = generate_latex(hyps, [], "topic with & ampersand", "")
