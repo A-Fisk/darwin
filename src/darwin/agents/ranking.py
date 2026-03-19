@@ -82,14 +82,11 @@ def run(state: ResearchState) -> dict[str, object]:
         )
         message = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=64,
+            max_tokens=512,
             system=system,
-            messages=[
-                {"role": "user", "content": prompt},
-                {"role": "assistant", "content": "{"},
-            ],
+            messages=[{"role": "user", "content": prompt}],
         )
-        result: dict[str, str] = parse_json_response(message, prefill="{")  # type: ignore[assignment]
+        result: dict[str, str] = parse_json_response(message)  # type: ignore[assignment]
         winner = result.get("winner", "draw")
         ratings[ha["id"]], ratings[hb["id"]] = _elo_update(
             ratings[ha["id"]], ratings[hb["id"]], winner
