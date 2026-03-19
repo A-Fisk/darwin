@@ -23,7 +23,7 @@ _MAX_RETRIES = 3
 _BASE_DELAY = 0.5  # seconds, shorter than literature agent since this is lighter
 
 # Optimization thresholds
-_BATCH_COMPARISON_THRESHOLD = 15  # Use batch comparisons when n >= 15
+_BATCH_COMPARISON_THRESHOLD = 12  # Use batch comparisons when n >= 12
 _SWISS_TOURNAMENT_THRESHOLD = 25  # Use Swiss system when n >= 25
 _MAX_BATCH_SIZE = 4  # Maximum hypotheses per batch comparison
 

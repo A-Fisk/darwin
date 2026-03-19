@@ -62,8 +62,26 @@ def test_small_pool_uses_pairwise():
     print(f"✓ Small pool (5): {message_content}")
 
 
+def test_iteration2_critical_case():
+    """Test that iteration 2 (13 hypotheses) uses batch comparisons to avoid 840s performance issue."""
+    hyps = [_make_hypothesis(f"h{i}") for i in range(13)]
+
+    # Mock batch comparison responses
+    batch_payload = json.dumps({"ranking": ["a", "b", "c", "d"]})
+
+    with patch("darwin.agents.ranking.anthropic.Anthropic") as MockClient:
+        MockClient.return_value.messages.create.return_value = _mock_message(batch_payload)
+        result = ranking.run(_make_state(hypotheses=hyps))
+
+    # Should use batch comparisons (20 vs 78 pairwise comparisons = 74% improvement)
+    message_content = result["messages"][0]["content"]
+    assert "batch comparisons" in message_content
+    assert "20 comparisons vs 78 full pairwise" in message_content
+    print(f"✓ Iteration 2 critical case (13): {message_content}")
+
+
 def test_medium_pool_uses_batch():
-    """Test that medium pools (15-24) use batch comparisons."""
+    """Test that medium pools (12-24) use batch comparisons."""
     hyps = [_make_hypothesis(f"h{i}") for i in range(18)]
 
     # Mock batch comparison responses
@@ -130,6 +148,7 @@ def test_performance_improvement():
 if __name__ == "__main__":
     print("Testing ranking algorithm optimization strategies...")
     test_small_pool_uses_pairwise()
+    test_iteration2_critical_case()
     test_medium_pool_uses_batch()
     test_large_pool_uses_swiss()
     test_performance_improvement()
