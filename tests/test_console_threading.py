@@ -10,7 +10,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from unittest.mock import Mock, patch
-from typing import Any
+from typing import Any, Iterator
 
 import pytest
 
@@ -506,11 +506,11 @@ class TestSyntheticDeadlockPrevention:
 
 
 @contextmanager
-def timeout_context(seconds: float):
+def timeout_context(seconds: float) -> Iterator[None]:
     """Context manager to enforce a timeout on code execution."""
     import signal
 
-    def timeout_handler(signum, frame):
+    def timeout_handler(signum: int, frame: Any) -> None:
         raise TimeoutError(f"Operation timed out after {seconds} seconds")
 
     # Set the signal handler
