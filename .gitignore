@@ -9,3 +9,7 @@ __pycache__/
 *.egg-info/
 .venv/
 dist/
+
+# Gas Town (added by gt)
+.logs/
+state.json
