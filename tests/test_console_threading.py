@@ -296,7 +296,8 @@ class TestAPITimeoutHandling:
     def test_anthropic_client_has_timeout(self) -> None:
         """Test that Anthropic client is configured with timeout."""
         # This tests the fix in generation.py
-        with patch('darwin.agents.generation.anthropic.Anthropic') as MockClient:
+        with patch('darwin.agents._common.get_anthropic_client') as mock_get_client, \
+             patch('darwin.agents._common.get_default_model') as mock_get_model:
             from darwin.agents.generation import run
             from darwin.state import ResearchState
 
@@ -306,7 +307,8 @@ class TestAPITimeoutHandling:
             mock_response.content = [Mock(type="text", text='[{"text": "test", "references": []}]')]
             mock_response.stop_reason = "end_turn"
             mock_client.messages.create.return_value = mock_response
-            MockClient.return_value = mock_client
+            mock_get_client.return_value = mock_client
+            mock_get_model.return_value = "claude-sonnet-4-6"
 
             # Create minimal state
             state: ResearchState = {
@@ -327,8 +329,8 @@ class TestAPITimeoutHandling:
             # Run generation
             run(state)
 
-            # Verify client was created with timeout
-            MockClient.assert_called_once_with(timeout=60.0)
+            # Verify client factory was called with timeout
+            mock_get_client.assert_called_once_with(timeout=60.0)
 
     def test_timeout_in_concurrent_scenario(self) -> None:
         """Test timeout behavior under concurrent load (simulation)."""
