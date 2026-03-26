@@ -24,9 +24,12 @@ _BASE_DELAY = 1.0  # seconds
 
 def _distil_query(topic: str) -> str:
     """Use Claude to distil a verbose research topic into 2-4 search keywords."""
-    client = anthropic.Anthropic()
+    from darwin.agents._common import get_anthropic_client, get_default_model
+
+    client = get_anthropic_client()
+    model = get_default_model()
     message = client.messages.create(
-        model="claude-sonnet-4-6",
+        model=model,
         max_tokens=MAX_TOKENS_SIMPLE,
         messages=[
             {
@@ -39,7 +42,7 @@ def _distil_query(topic: str) -> str:
             }
         ],
     )
-    return message.content[0].text.strip()
+    return message.content[0].text.strip()  # type: ignore[union-attr]
 
 
 def _fetch_semantic_scholar(query: str) -> list[dict[str, str]]:

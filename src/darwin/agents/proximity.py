@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import anthropic
 
-from darwin.agents._common import latest_hypotheses, parse_json_response
+from darwin.agents._common import latest_hypotheses, parse_json_response, get_anthropic_client, get_default_model
 from darwin.config import MAX_TOKENS_DETAILED
 from darwin.console import print_safe, progress_context
 from darwin.state import ResearchState
@@ -21,7 +21,8 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 
 def run(state: ResearchState) -> dict[str, object]:
     """Cluster hypotheses by semantic similarity using the LLM."""
-    client = anthropic.Anthropic()
+    client = get_anthropic_client()
+    model = get_default_model()
 
     pool = latest_hypotheses(state["hypotheses"])
     if not pool:
@@ -47,7 +48,7 @@ def run(state: ResearchState) -> dict[str, object]:
         progress.update(task, advance=0, description=f"[cyan]Requesting semantic clustering from Claude...")
 
         message = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=model,
             max_tokens=MAX_TOKENS_DETAILED,
             system=_SYSTEM,
             messages=[

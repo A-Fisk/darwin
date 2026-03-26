@@ -1,0 +1,44 @@
+# Sample Darwin Configuration File
+#
+# This file demonstrates how to configure LLM endpoints for Darwin.
+# Place this file at ./darwin.toml or ~/.config/darwin/darwin.toml
+
+[llm]
+# API configuration - choose one authentication method
+# api_key = "your-anthropic-api-key"        # For Anthropic Claude API
+# auth_token = "your-auth-token"            # Alternative authentication
+
+# Endpoint configuration
+# base_url = "https://api.anthropic.com"    # Default Anthropic endpoint
+# base_url = "http://localhost:11434"       # For local Ollama server
+# base_url = "https://your-proxy.example.com/anthropic"  # For custom proxy
+
+# Model selection
+model = "claude-sonnet-4-6"                 # Default Darwin model
+# model = "claude-opus-4-6"                 # For higher quality (slower/more expensive)
+# model = "claude-haiku-4-6"                # For faster responses (lower quality)
+
+# Request parameters
+timeout = 30.0                              # Request timeout in seconds
+max_retries = 2                             # Number of retries on failure
+
+# Examples for different scenarios:
+
+# 1. Using OpenRouter (claude via third-party)
+# [llm]
+# api_key = "sk-or-..."
+# base_url = "https://openrouter.ai/api/v1"
+# model = "anthropic/claude-sonnet-4-6"
+
+# 2. Using local Ollama server with Claude-compatible model
+# [llm]
+# base_url = "http://localhost:11434"
+# model = "llama3.2:latest"
+# timeout = 60.0
+
+# 3. Using corporate proxy
+# [llm]
+# api_key = "your-corporate-key"
+# base_url = "https://ai-gateway.corp.com/anthropic"
+# timeout = 45.0
+# max_retries = 3

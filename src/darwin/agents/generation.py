@@ -40,8 +40,11 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 
 def run(state: ResearchState) -> dict[str, object]:
     """Generate NEW_PER_ITERATION new hypotheses for the current iteration."""
-    # Add timeout to prevent hanging on API calls
-    client = anthropic.Anthropic(timeout=60.0)  # 60 second timeout
+    from darwin.agents._common import get_anthropic_client, get_default_model
+
+    # Use centralized client with configurable timeout (default 60s for generation)
+    client = get_anthropic_client(timeout=60.0)
+    model = get_default_model()
 
     existing = latest_hypotheses(state["hypotheses"])
     context = ""
@@ -90,7 +93,7 @@ def run(state: ResearchState) -> dict[str, object]:
         )
 
         message = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=model,
             max_tokens=MAX_TOKENS_CREATIVE,
             system=system,
             messages=[

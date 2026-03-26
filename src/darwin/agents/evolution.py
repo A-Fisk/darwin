@@ -5,7 +5,7 @@ import uuid
 
 import anthropic
 
-from darwin.agents._common import parse_json_response
+from darwin.agents._common import parse_json_response, get_anthropic_client, get_default_model
 from darwin.config import EVOLVED_PER_ITERATION, MAX_TOKENS_CREATIVE
 from darwin.console import print_safe, progress_context
 from darwin.state import Hypothesis, ResearchState
@@ -26,7 +26,8 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 
 def run(state: ResearchState) -> dict[str, object]:
     """Evolve EVOLVED_PER_ITERATION new hypotheses from top_hypotheses."""
-    client = anthropic.Anthropic()
+    client = get_anthropic_client()
+    model = get_default_model()
 
     parents = state.get("top_hypotheses") or []
     if not parents:
@@ -58,7 +59,7 @@ def run(state: ResearchState) -> dict[str, object]:
         )
 
         message = client.messages.create(
-            model="claude-sonnet-4-6",
+            model=model,
             max_tokens=MAX_TOKENS_CREATIVE,
             system=_SYSTEM.format(n=EVOLVED_PER_ITERATION),
             messages=[

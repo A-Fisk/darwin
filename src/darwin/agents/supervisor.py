@@ -6,7 +6,7 @@ from typing import Literal
 
 import anthropic
 
-from darwin.agents._common import latest_hypotheses, parse_json_response
+from darwin.agents._common import latest_hypotheses, parse_json_response, get_anthropic_client, get_default_model
 from darwin.config import TOP_N_HYPOTHESES, MAX_TOKENS_SIMPLE
 from darwin.state import ResearchState
 
@@ -43,7 +43,8 @@ def run(state: ResearchState) -> dict[str, object]:
             ],
         }
 
-    client = anthropic.Anthropic()
+    client = get_anthropic_client()
+    model = get_default_model()
     pool = latest_hypotheses(state["hypotheses"])
     top = state.get("top_hypotheses") or pool[:TOP_N_HYPOTHESES]
     top_text = "\n".join(f"[score={h['score']:.2f}] {h['text']}" for h in top)
@@ -58,7 +59,7 @@ def run(state: ResearchState) -> dict[str, object]:
     )
 
     message = client.messages.create(
-        model="claude-sonnet-4-6",
+        model=model,
         max_tokens=MAX_TOKENS_SIMPLE,
         system=_SYSTEM,
         messages=[

@@ -11,7 +11,7 @@ from typing import Any
 
 import anthropic
 
-from darwin.agents._common import criteria_prompt_block, latest_hypotheses, parse_json_response
+from darwin.agents._common import criteria_prompt_block, latest_hypotheses, parse_json_response, get_anthropic_client, get_default_model
 from darwin.config import TOP_N_HYPOTHESES, MAX_TOKENS_COMPLEX
 from darwin.console import progress_context
 from darwin.state import Hypothesis, ResearchState
@@ -78,7 +78,8 @@ def _batch_compare_hypotheses(
     batch: list[Hypothesis],
     topic: str,
     criteria_block: str,
-    lit_index: dict[str, str]
+    lit_index: dict[str, str],
+    model: str
 ) -> dict[str, float]:
     """Compare a small batch of hypotheses and return relative strengths.
 
@@ -116,7 +117,7 @@ def _batch_compare_hypotheses(
 
         try:
             message = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=model,
                 max_tokens=MAX_TOKENS_COMPLEX,
                 system=system,
                 messages=[{"role": "user", "content": prompt}],
@@ -168,7 +169,8 @@ def _pairwise_compare(
     hb: Hypothesis,
     topic: str,
     criteria_block: str,
-    lit_index: dict[str, str]
+    lit_index: dict[str, str],
+    model: str
 ) -> str:
     """Compare two hypotheses and return winner ('a', 'b', or 'draw').
 
@@ -201,7 +203,7 @@ def _pairwise_compare(
 
         try:
             message = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=model,
                 max_tokens=MAX_TOKENS_COMPLEX,
                 system=system,
                 messages=[{"role": "user", "content": prompt}],
@@ -240,7 +242,8 @@ def _swiss_tournament(
     topic: str,
     criteria_block: str,
     lit_index: dict[str, str],
-    rounds: int = None
+    model: str,
+    rounds: int | None = None
 ) -> dict[str, float]:
     """Run a Swiss tournament system to efficiently rank hypotheses."""
     n = len(pool)
@@ -273,7 +276,7 @@ def _swiss_tournament(
         # Process pairs in parallel
         def compare_pair(pair_data: tuple[Hypothesis, Hypothesis]) -> tuple[str, str, str]:
             ha, hb = pair_data
-            winner = _pairwise_compare(client, ha, hb, topic, criteria_block, lit_index)
+            winner = _pairwise_compare(client, ha, hb, topic, criteria_block, lit_index, model)
             return ha["id"], hb["id"], winner
 
         with ThreadPoolExecutor(max_workers=4) as executor:
@@ -296,7 +299,8 @@ def _batch_tournament(
     pool: list[Hypothesis],
     topic: str,
     criteria_block: str,
-    lit_index: dict[str, str]
+    lit_index: dict[str, str],
+    model: str
 ) -> dict[str, float]:
     """Use batch comparisons to efficiently rank moderate-sized pools."""
     n = len(pool)
@@ -316,7 +320,7 @@ def _batch_tournament(
             batches.append(batch)
 
     def process_batch(batch: list[Hypothesis]) -> dict[str, float]:
-        return _batch_compare_hypotheses(client, batch, topic, criteria_block, lit_index)
+        return _batch_compare_hypotheses(client, batch, topic, criteria_block, lit_index, model)
 
     # Process batches in parallel
     with ThreadPoolExecutor(max_workers=3) as executor:
@@ -348,7 +352,8 @@ def _batch_tournament(
 
 def run(state: ResearchState) -> dict[str, object]:
     """Run optimized tournament system with batching, Swiss rounds, or classic pairwise."""
-    client = anthropic.Anthropic()
+    client = get_anthropic_client()
+    model = get_default_model()
 
     pool = latest_hypotheses(state["hypotheses"])
     if not pool:
@@ -370,12 +375,12 @@ def run(state: ResearchState) -> dict[str, object]:
     # Choose ranking strategy based on pool size
     if n >= _SWISS_TOURNAMENT_THRESHOLD:
         # Large pool: Swiss tournament system
-        ratings = _swiss_tournament(client, pool, state["topic"], criteria_block, lit_index)
+        ratings = _swiss_tournament(client, pool, state["topic"], criteria_block, lit_index, model)
         strategy = f"Swiss tournament ({math.ceil(math.log2(n)) + 1} rounds)"
         comparisons = len(pool) // 2 * (math.ceil(math.log2(n)) + 1)
     elif n >= _BATCH_COMPARISON_THRESHOLD:
         # Medium pool: batch comparisons
-        ratings = _batch_tournament(client, pool, state["topic"], criteria_block, lit_index)
+        ratings = _batch_tournament(client, pool, state["topic"], criteria_block, lit_index, model)
         strategy = f"batch comparisons ({_MAX_BATCH_SIZE} per batch)"
         # Estimate: overlapping batches reduce total comparisons significantly
         batches = math.ceil(n / (_MAX_BATCH_SIZE - 1))
@@ -393,7 +398,7 @@ def run(state: ResearchState) -> dict[str, object]:
                 # Update progress bar with current comparison
                 progress.update(task, advance=1, description=f"[cyan]Comparing hypothesis {ha['id'][:4]} vs {hb['id'][:4]} ({i+1}/{len(pairs)})")
 
-                winner = _pairwise_compare(client, ha, hb, state["topic"], criteria_block, lit_index)
+                winner = _pairwise_compare(client, ha, hb, state["topic"], criteria_block, lit_index, model)
                 ratings[ha["id"]], ratings[hb["id"]] = _elo_update(
                     ratings[ha["id"]], ratings[hb["id"]], winner
                 )

@@ -24,7 +24,10 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 
 def run(state: ResearchState) -> dict[str, object]:
     """Add reflections and updated scores to hypotheses from the current iteration."""
-    client = anthropic.Anthropic()
+    from darwin.agents._common import get_anthropic_client, get_default_model
+
+    client = get_anthropic_client()
+    model = get_default_model()
     iteration = state["iteration"]
 
     # Only reflect on hypotheses generated in this iteration
@@ -72,7 +75,7 @@ def run(state: ResearchState) -> dict[str, object]:
 
             prompt = f"Topic: {state['topic']}\nHypothesis: {hyp['text']}{lit_note}"
             message = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=model,
                 max_tokens=MAX_TOKENS_DETAILED,
                 system=system,
                 messages=[

@@ -5,11 +5,77 @@ import importlib.resources
 import json
 import re
 import tomllib
-from typing import NamedTuple
+from typing import NamedTuple, Any
 
 import anthropic
 
 from darwin.state import Hypothesis
+
+
+def get_anthropic_client(
+    api_key: str | None = None,
+    auth_token: str | None = None,
+    base_url: str | None = None,
+    timeout: float | None = None,
+    max_retries: int | None = None,
+) -> anthropic.Anthropic:
+    """Create an Anthropic client with the given configuration.
+
+    Uses darwin.config.get_llm_config() to resolve configuration from CLI args,
+    environment variables, and config files.
+    """
+    from darwin.config import get_llm_config
+
+    # Merge CLI args if they haven't been explicitly overridden
+    try:
+        from darwin.cli import get_cli_llm_args
+        cli_args = get_cli_llm_args()
+
+        # Use CLI args as defaults if not explicitly provided to this function
+        if api_key is None:
+            api_key = cli_args.get("api_key")
+        if auth_token is None:
+            auth_token = cli_args.get("auth_token")
+        if base_url is None:
+            base_url = cli_args.get("base_url")
+        if timeout is None:
+            timeout = cli_args.get("timeout")
+        if max_retries is None:
+            max_retries = cli_args.get("max_retries")
+    except ImportError:
+        # CLI module not available (e.g., when used as a library)
+        pass
+
+    config = get_llm_config(
+        api_key=api_key,
+        auth_token=auth_token,
+        base_url=base_url,
+        timeout=timeout,
+        max_retries=max_retries,
+    )
+
+    # Create client with resolved config (None values are filtered out)
+    client_kwargs: dict[str, Any] = {k: v for k, v in config.items() if v is not None and k != "model"}
+
+    return anthropic.Anthropic(**client_kwargs)
+
+
+def get_default_model() -> str:
+    """Get the default model from configuration."""
+    from darwin.config import get_llm_config
+
+    # Try to get model from CLI args first
+    try:
+        from darwin.cli import get_cli_llm_args
+        cli_args = get_cli_llm_args()
+        cli_model = cli_args.get("model")
+        if cli_model:
+            return cli_model
+    except ImportError:
+        pass
+
+    config = get_llm_config()
+    return config["model"] or "claude-sonnet-4-6"
 
 
 def parse_json_response(

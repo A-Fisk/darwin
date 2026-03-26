@@ -13,6 +13,16 @@ from darwin.console import get_console, status_context
 
 console = get_console()
 
+# Global variable to store CLI args for LLM configuration
+_llm_args: dict[str, Any] | None = None
+
+
+def get_cli_llm_args() -> dict[str, Any]:
+    """Get the LLM configuration args from CLI. Used by agents."""
+    if _llm_args is None:
+        return {}
+    return _llm_args
+
 # After a node completes, what spinner text to show while next node runs
 _NEXT_STATUS: dict[str, str] = {
     "literature": "  ⟳ generation...",
@@ -216,7 +226,60 @@ def main() -> None:
         default=None,
         help="Write human-readable text summary to FILE on completion",
     )
+
+    # LLM endpoint configuration
+    llm_group = parser.add_argument_group("LLM configuration")
+    llm_group.add_argument(
+        "--api-key",
+        metavar="KEY",
+        help="API key for LLM service (overrides ANTHROPIC_API_KEY)",
+    )
+    llm_group.add_argument(
+        "--auth-token",
+        metavar="TOKEN",
+        help="Auth token for LLM service (overrides ANTHROPIC_AUTH_TOKEN)",
+    )
+    llm_group.add_argument(
+        "--base-url",
+        metavar="URL",
+        help="Base URL for LLM API endpoint (overrides ANTHROPIC_BASE_URL)",
+    )
+    llm_group.add_argument(
+        "--timeout",
+        type=float,
+        metavar="SECONDS",
+        help="Request timeout in seconds (overrides DARWIN_TIMEOUT)",
+    )
+    llm_group.add_argument(
+        "--max-retries",
+        type=int,
+        metavar="N",
+        help="Maximum number of API retries (overrides DARWIN_MAX_RETRIES)",
+    )
+    llm_group.add_argument(
+        "--model",
+        metavar="MODEL",
+        help="LLM model to use (overrides DARWIN_MODEL, default: claude-sonnet-4-6)",
+    )
+
     args = parser.parse_args()
+
+    from langgraph.checkpoint.memory import MemorySaver
+    from langgraph.types import Command
+
+    from darwin.graph import build_graph
+    from darwin.review import display_final_results, prompt_human
+
+    # Store LLM config globally for agents to access
+    global _llm_args
+    _llm_args = {
+        "api_key": args.api_key,
+        "auth_token": args.auth_token,
+        "base_url": args.base_url,
+        "timeout": args.timeout,
+        "max_retries": args.max_retries,
+        "model": args.model,
+    }
 
     from langgraph.checkpoint.memory import MemorySaver
     from langgraph.types import Command
