@@ -251,7 +251,7 @@ class CitationLogger:
         """Suggest an action to fix the citation failure."""
         if result.missing_citations and result.available_but_unused:
             return f"Add citations to {len(result.available_but_unused)} available supporting papers"
-        elif result.existing_citations and not result.matches:
+        elif result.requirement.existing_citations and not result.matches:
             return "Replace invalid citations with appropriate references"
         elif not result.available_but_unused:
             return "No supporting literature available - consider rephrasing claim or gathering more references"

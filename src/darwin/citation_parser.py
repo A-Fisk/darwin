@@ -52,7 +52,7 @@ class CitationParser:
     # Patterns for existing citations in text
     CITATION_PATTERNS = [
         r'\(([^)]+\s+\d{4}[a-z]?)\)',  # (Author 2023) or (Author et al. 2023a)
-        r'\[(\d+(?:,\s*\d+)*)\]',      # [1] or [1,2,3]
+        r'\[([^\]]+)\]',                # [paper_id] or [smith2023protein]
         r'\\citep?\{([^}]+)\}',         # LaTeX citations
     ]
 
