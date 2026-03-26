@@ -91,6 +91,12 @@ def set_debug_mode(mode: Literal["off", "fast", "minimal", "mock"]) -> None:
     _debug_config = DebugConfig.from_mode(mode)
 
 
+def reset_debug_mode() -> None:
+    """Reset debug mode to default (off). Used for test isolation."""
+    global _debug_config
+    _debug_config = DebugConfig()
+
+
 def get_debug_config() -> DebugConfig:
     """Get the current debug configuration."""
     return _debug_config
