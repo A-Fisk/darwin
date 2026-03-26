@@ -9,3 +9,7 @@ __pycache__/
 *.egg-info/
 .venv/
 dist/
+
+# Citation verification logs
+logs/
+*.log
