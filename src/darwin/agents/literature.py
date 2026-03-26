@@ -208,6 +208,8 @@ def run(state: ResearchState) -> dict[str, object]:
     persistent failure. Runs only on the first iteration (literature_context
     empty). Subsequent iterations reuse the cached results.
     """
+    from darwin.debug_modes import should_mock_agent, get_mock_literature_context, artificial_delay
+
     if state.get("literature_context"):
         return {
             "messages": [
@@ -220,6 +222,25 @@ def run(state: ResearchState) -> dict[str, object]:
                     ),
                 }
             ]
+        }
+
+    # Check if we should use mock data
+    if should_mock_agent("literature"):
+        artificial_delay()
+        papers = get_mock_literature_context()
+        return {
+            "literature_context": papers,
+            "query": "mock query",
+            "messages": [
+                {
+                    "role": "agent",
+                    "agent": "literature",
+                    "content": (
+                        f"fetched {len(papers)} papers from mock_data "
+                        f"(debug mode active)"
+                    ),
+                }
+            ],
         }
 
     topic = state["topic"]

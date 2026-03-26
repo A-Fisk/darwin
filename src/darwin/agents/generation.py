@@ -40,6 +40,32 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 
 def run(state: ResearchState) -> dict[str, object]:
     """Generate NEW_PER_ITERATION new hypotheses for the current iteration."""
+    from darwin.debug_modes import should_mock_agent, generate_mock_hypotheses, artificial_delay
+
+    iteration = state["iteration"]
+
+    # Check if we should use mock generation
+    if should_mock_agent("generation"):
+        artificial_delay()
+        new_hypotheses = generate_mock_hypotheses(
+            topic=state["topic"],
+            count=NEW_PER_ITERATION,
+            iteration=iteration
+        )
+
+        print_safe(f"  [green]✓[/green] Generated {len(new_hypotheses)} hypotheses (debug mode)")
+
+        return {
+            "hypotheses": new_hypotheses,
+            "messages": [
+                {
+                    "role": "agent",
+                    "agent": "generation",
+                    "content": f"Generated {len(new_hypotheses)} hypotheses (iteration {iteration}, debug mode)",
+                }
+            ],
+        }
+
     # Add timeout to prevent hanging on API calls
     client = anthropic.Anthropic(timeout=60.0)  # 60 second timeout
 

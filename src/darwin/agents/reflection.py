@@ -24,7 +24,8 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 
 def run(state: ResearchState) -> dict[str, object]:
     """Add reflections and updated scores to hypotheses from the current iteration."""
-    client = anthropic.Anthropic()
+    from darwin.debug_modes import should_mock_agent, mock_reflection_score, artificial_delay
+
     iteration = state["iteration"]
 
     # Only reflect on hypotheses generated in this iteration
@@ -39,6 +40,37 @@ def run(state: ResearchState) -> dict[str, object]:
                 }
             ]
         }
+
+    # Check if we should use mock reflection
+    if should_mock_agent("reflection"):
+        artificial_delay()
+        updated = []
+        for hyp in current:
+            critique, score = mock_reflection_score()
+            updated.append(
+                Hypothesis(
+                    id=hyp["id"],
+                    text=hyp["text"],
+                    score=score,
+                    reflections=hyp["reflections"] + [critique],
+                    generation=hyp["generation"],
+                    evolved_from=hyp["evolved_from"],
+                    references=hyp.get("references", []),
+                )
+            )
+
+        return {
+            "hypotheses": updated,
+            "messages": [
+                {
+                    "role": "agent",
+                    "agent": "reflection",
+                    "content": f"Reflected on {len(updated)} hypotheses (iteration {iteration}, debug mode)",
+                }
+            ],
+        }
+
+    client = anthropic.Anthropic()
 
     criteria_block = criteria_prompt_block()
     system = _SYSTEM.format(criteria=criteria_block)

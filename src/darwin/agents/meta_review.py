@@ -26,6 +26,40 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 
 def run(state: ResearchState) -> dict[str, object]:
     """Audit hypothesis quality across iterations and set supervisor_decision."""
+    from darwin.debug_modes import should_mock_agent, artificial_delay
+
+    pool = latest_hypotheses(state["hypotheses"])
+    top = state.get("top_hypotheses") or pool[:TOP_N_HYPOTHESES]
+
+    # Check if we should use mock meta_review
+    if should_mock_agent("meta_review"):
+        artificial_delay()
+        # Simple mock meta_review logic
+        iteration = state["iteration"]
+        max_iterations = state["max_iterations"]
+
+        if iteration >= max_iterations - 1:
+            decision = "stop"
+            notes = "Mock meta-review: Reached iteration limit. Research appears complete."
+        elif len(top) < 2:
+            decision = "continue"
+            notes = "Mock meta-review: Need more hypotheses for proper evaluation."
+        else:
+            decision = "continue"
+            notes = f"Mock meta-review: Iteration {iteration} shows {len(top)} promising hypotheses. Continue research."
+
+        return {
+            "supervisor_decision": decision,
+            "meta_review_notes": notes,
+            "messages": [
+                {
+                    "role": "agent",
+                    "agent": "meta_review",
+                    "content": f"Meta-review complete: {decision} (debug mode)",
+                }
+            ],
+        }
+
     client = anthropic.Anthropic()
 
     pool = latest_hypotheses(state["hypotheses"])

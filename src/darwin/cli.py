@@ -216,7 +216,22 @@ def main() -> None:
         default=None,
         help="Write human-readable text summary to FILE on completion",
     )
+    parser.add_argument(
+        "--debug",
+        choices=["off", "fast", "minimal", "mock"],
+        default="off",
+        help=(
+            "Debug mode for faster development: "
+            "'fast' reduces LLM calls, "
+            "'minimal' uses LLMs only for core research, "
+            "'mock' uses fake data for UI testing (default: off)"
+        ),
+    )
     args = parser.parse_args()
+
+    # Initialize debug mode
+    from darwin.debug_modes import set_debug_mode
+    set_debug_mode(args.debug)
 
     from langgraph.checkpoint.memory import MemorySaver
     from langgraph.types import Command
@@ -248,6 +263,8 @@ def main() -> None:
     console.print("[bold green]Darwin Co-Scientist[/bold green]")
     console.print(f"Topic: [cyan]{args.topic}[/cyan]")
     console.print(f"Max iterations: {args.iterations}")
+    if args.debug != "off":
+        console.print(f"[yellow]Debug mode: {args.debug}[/yellow]")
     console.print()
 
     # Track total execution time when verbose

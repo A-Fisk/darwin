@@ -348,6 +348,36 @@ def _batch_tournament(
 
 def run(state: ResearchState) -> dict[str, object]:
     """Run optimized tournament system with batching, Swiss rounds, or classic pairwise."""
+    from darwin.debug_modes import should_mock_agent, mock_ranking_scores, artificial_delay
+
+    pool = latest_hypotheses(state["hypotheses"])
+    if not pool:
+        return {
+            "ranked_ids": [],
+            "top_hypotheses": [],
+            "messages": [{"role": "agent", "agent": "ranking", "content": "no hypotheses to rank"}],
+        }
+
+    # Check if we should use mock ranking
+    if should_mock_agent("ranking"):
+        artificial_delay()
+        updated = mock_ranking_scores(pool)
+        ranked_ids = [h["id"] for h in updated]
+        top = updated[:TOP_N_HYPOTHESES]
+
+        return {
+            "hypotheses": updated,
+            "ranked_ids": ranked_ids,
+            "top_hypotheses": top,
+            "messages": [
+                {
+                    "role": "agent",
+                    "agent": "ranking",
+                    "content": f"Ranked {len(updated)} hypotheses via mock ranking (debug mode)",
+                }
+            ],
+        }
+
     client = anthropic.Anthropic()
 
     pool = latest_hypotheses(state["hypotheses"])

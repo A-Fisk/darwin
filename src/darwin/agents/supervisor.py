@@ -28,6 +28,8 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 
 def run(state: ResearchState) -> dict[str, object]:
     """Increment iteration and optionally refine supervisor_decision via LLM."""
+    from darwin.debug_modes import should_mock_agent, mock_supervisor_decision, artificial_delay
+
     new_iteration = state["iteration"] + 1
 
     # On the very first iteration there's nothing to review — just start generating
@@ -42,6 +44,36 @@ def run(state: ResearchState) -> dict[str, object]:
                 }
             ],
         }
+
+    # Check if we should use mock supervisor
+    if should_mock_agent("supervisor"):
+        artificial_delay()
+        pool = latest_hypotheses(state["hypotheses"])
+        top = state.get("top_hypotheses") or pool[:TOP_N_HYPOTHESES]
+
+        decision = mock_supervisor_decision(
+            iteration=new_iteration,
+            max_iterations=state["max_iterations"],
+            top_hypotheses=top
+        )
+
+        update: dict[str, object] = {
+            "iteration": new_iteration,
+            "supervisor_decision": decision,
+            "messages": [
+                {
+                    "role": "agent",
+                    "agent": "supervisor",
+                    "content": f"iteration {new_iteration}; decision={decision} (debug mode)",
+                }
+            ],
+        }
+
+        # Populate final_hypotheses whenever the run is ending
+        if decision == "stop" or new_iteration > state["max_iterations"]:
+            update["final_hypotheses"] = top
+
+        return update
 
     client = anthropic.Anthropic()
     pool = latest_hypotheses(state["hypotheses"])

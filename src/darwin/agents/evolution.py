@@ -26,6 +26,56 @@ Output ONLY valid JSON — no prose, no markdown fences."""
 
 def run(state: ResearchState) -> dict[str, object]:
     """Evolve EVOLVED_PER_ITERATION new hypotheses from top_hypotheses."""
+    from darwin.debug_modes import should_mock_agent, artificial_delay
+
+    parents = state.get("top_hypotheses") or []
+    if not parents:
+        return {
+            "hypotheses": [],
+            "messages": [
+                {"role": "agent", "agent": "evolution", "content": "no top hypotheses to evolve"}
+            ],
+        }
+
+    # Check if we should use mock evolution
+    if should_mock_agent("evolution"):
+        artificial_delay()
+        # Simple mock evolution - just create variations of existing hypotheses
+        evolved = []
+        iteration = state["iteration"]
+
+        for i in range(min(EVOLVED_PER_ITERATION, len(parents))):
+            parent = parents[i]
+            # Simple text variation for mock
+            evolved_text = parent["text"].replace("hypothesis", "evolved hypothesis")
+            if evolved_text == parent["text"]:  # If no replacement happened
+                evolved_text = f"Enhanced version of {parent['text'][:50]}..."
+
+            evolved.append(
+                Hypothesis(
+                    id=uuid.uuid4().hex[:8],
+                    text=evolved_text,
+                    score=0.5,
+                    reflections=[],
+                    generation=iteration,
+                    evolved_from=parent["id"],
+                    references=parent.get("references", []),
+                )
+            )
+
+        print_safe(f"  [green]✓[/green] Evolved {len(evolved)} hypotheses (debug mode)")
+
+        return {
+            "hypotheses": evolved,
+            "messages": [
+                {
+                    "role": "agent",
+                    "agent": "evolution",
+                    "content": f"Evolved {len(evolved)} hypotheses from {len(parents)} parents (debug mode)",
+                }
+            ],
+        }
+
     client = anthropic.Anthropic()
 
     parents = state.get("top_hypotheses") or []
