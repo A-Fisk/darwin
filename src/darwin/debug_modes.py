@@ -5,11 +5,11 @@ LLM calls for faster development iteration and testing.
 """
 from __future__ import annotations
 
-from typing import Any, Literal
-from dataclasses import dataclass
-import uuid
 import random
 import time
+import uuid
+from dataclasses import dataclass
+from typing import Any, Literal
 
 from darwin.state import Hypothesis
 
@@ -122,7 +122,11 @@ SAMPLE_PAPERS = [
     {
         "paper_id": "sample_001",
         "title": "Mechanisms of Antibiotic Resistance in Hospital Pathogens",
-        "abstract": "A comprehensive review of how bacterial pathogens develop and spread antibiotic resistance in healthcare settings through horizontal gene transfer, biofilm formation, and selective pressure from antibiotic use.",
+        "abstract": (
+            "A comprehensive review of how bacterial pathogens develop and spread "
+            "antibiotic resistance in healthcare settings through horizontal gene transfer, "
+            "biofilm formation, and selective pressure from antibiotic use."
+        ),
         "authors": "Smith, J., Johnson, A., Brown, K.",
         "year": "2023",
         "venue": "Nature Medicine",
@@ -132,7 +136,10 @@ SAMPLE_PAPERS = [
     {
         "paper_id": "sample_002",
         "title": "Biofilm Formation and Medical Device Infections",
-        "abstract": "Investigation of how bacterial biofilms form on medical devices and create protected environments for resistance gene acquisition and transmission.",
+        "abstract": (
+            "Investigation of how bacterial biofilms form on medical devices and create protected "
+            "environments for resistance gene acquisition and transmission."
+        ),
         "authors": "Davis, L., Wilson, M., Garcia, R.",
         "year": "2023",
         "venue": "Clinical Microbiology Reviews",
@@ -142,7 +149,10 @@ SAMPLE_PAPERS = [
     {
         "paper_id": "sample_003",
         "title": "Horizontal Gene Transfer in ICU Environments",
-        "abstract": "Analysis of conjugative plasmid transfer rates in intensive care unit bacterial populations and their role in multi-drug resistance spread.",
+        "abstract": (
+            "Analysis of conjugative plasmid transfer rates in intensive care unit bacterial "
+            "populations and their role in multi-drug resistance spread."
+        ),
         "authors": "Lee, C., Martinez, P., Thompson, S.",
         "year": "2022",
         "venue": "The Lancet Infectious Diseases",
@@ -152,11 +162,26 @@ SAMPLE_PAPERS = [
 ]
 
 HYPOTHESIS_TEMPLATES = [
-    "Horizontal gene transfer via conjugative plasmids is the primary mechanism of {topic_key} in hospital settings",
-    "Biofilm formation on medical devices creates protected niches that enable {topic_key} through reduced antibiotic penetration",
-    "Sub-therapeutic antibiotic concentrations in ICU environments select for {topic_key} variants with intermediate resistance",
-    "Quorum sensing systems coordinate {topic_key} responses across bacterial populations during hospital outbreaks",
-    "Efflux pump upregulation provides a rapid adaptive response to {topic_key} selective pressure in clinical isolates",
+    (
+        "Horizontal gene transfer via conjugative plasmids is the primary mechanism "
+        "of {topic_key} in hospital settings"
+    ),
+    (
+        "Biofilm formation on medical devices creates protected niches that enable "
+        "{topic_key} through reduced antibiotic penetration"
+    ),
+    (
+        "Sub-therapeutic antibiotic concentrations in ICU environments select for "
+        "{topic_key} variants with intermediate resistance"
+    ),
+    (
+        "Quorum sensing systems coordinate {topic_key} responses across bacterial "
+        "populations during hospital outbreaks"
+    ),
+    (
+        "Efflux pump upregulation provides a rapid adaptive response to {topic_key} "
+        "selective pressure in clinical isolates"
+    ),
 ]
 
 
@@ -198,7 +223,9 @@ def generate_mock_hypotheses(topic: str, count: int = 5, iteration: int = 1) -> 
                 reflections=[f"Mock reflection for hypothesis {i+1}"],
                 generation=iteration,
                 evolved_from=None,
-                references=random.sample([p["paper_id"] for p in SAMPLE_PAPERS], k=random.randint(0, 2))
+                references=random.sample(
+                    [p["paper_id"] for p in SAMPLE_PAPERS], k=random.randint(0, 2)
+                )
             )
         )
 
@@ -239,12 +266,8 @@ def mock_ranking_scores(hypotheses: list[Hypothesis]) -> list[Hypothesis]:
     # Simple ranking based on existing scores with some noise
     ranked = sorted(hypotheses, key=lambda h: h["score"] + random.uniform(-0.1, 0.1), reverse=True)
 
-    # Normalize scores to 0-1 range
+    # Normalize scores to 0-1 range (simple ranking-based normalization)
     if ranked:
-        max_score = ranked[0]["score"]
-        min_score = ranked[-1]["score"]
-        score_range = max_score - min_score if max_score > min_score else 1.0
-
         for i, h in enumerate(ranked):
             # Give top hypotheses better scores
             normalized = 1.0 - (i / len(ranked)) * 0.7  # Top gets 1.0, bottom gets 0.3
