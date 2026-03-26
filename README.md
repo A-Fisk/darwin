@@ -60,7 +60,17 @@ uv run darwin "<research question>"
 | Flag | Default | Description |
 |---|---|---|
 | `--iterations N` | `5` | Maximum number of research iterations |
+| `--debug MODE` | `off` | Debug mode for development: `fast`, `minimal`, `mock`, or `off` |
 | `--output-dir DIR` | _(none)_ | Write `hypotheses.tex` and `references.bib` to DIR on completion |
+
+**Debug modes for faster development:**
+
+| Mode | LLM Usage | Speed | Use Case |
+|---|---|---|---|
+| `off` | Full | Slow (production) | Real research, final results |
+| `fast` | Reduced | Fast | Development, keeps real generation & reflection |
+| `minimal` | Core only | Faster | Development, only generation & reflection use LLMs |
+| `mock` | None | Fastest | UI testing, workflow validation |
 
 **Customization**: To modify ranking criteria or algorithm settings, see the [Ranking Algorithm](#ranking-algorithm) section below.
 
@@ -72,6 +82,12 @@ uv run darwin "What causes antibiotic resistance to spread in hospital settings?
 
 # Run more iterations for deeper exploration
 uv run darwin "Novel mechanisms for carbon capture" --iterations 10
+
+# Fast development mode (reduced LLM calls)
+uv run darwin "Novel mechanisms for carbon capture" --debug fast
+
+# Mock mode for UI testing (no LLM calls)
+uv run darwin "Test research topic" --debug mock --iterations 2
 
 # Save results as LaTeX + BibTeX files
 uv run darwin "Novel mechanisms for carbon capture" --output-dir ./results
