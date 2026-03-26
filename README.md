@@ -41,7 +41,7 @@ cd darwin
 uv sync
 ```
 
-Set your Anthropic API key:
+Configure authentication (see [Configuration](#configuration) for more options):
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -61,8 +61,21 @@ uv run darwin "<research question>"
 |---|---|---|
 | `--iterations N` | `5` | Maximum number of research iterations |
 | `--output-dir DIR` | _(none)_ | Write `hypotheses.tex` and `references.bib` to DIR on completion |
+| `--output-file FILE` | _(none)_ | Write human-readable text summary to FILE on completion |
+| `--verbose`, `-v` | `0` | Show agent output and timing details (`-vv` for real-time streaming) |
 
-**Customization**: To modify ranking criteria or algorithm settings, see the [Ranking Algorithm](#ranking-algorithm) section below.
+**LLM Configuration Options:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--api-key KEY` | `$ANTHROPIC_API_KEY` | API key for LLM service |
+| `--auth-token TOKEN` | `$ANTHROPIC_AUTH_TOKEN` | Alternative authentication token |
+| `--base-url URL` | `$ANTHROPIC_BASE_URL` | Custom API endpoint URL |
+| `--model MODEL` | `claude-sonnet-4-6` | LLM model to use |
+| `--timeout SECONDS` | `$DARWIN_TIMEOUT` | Request timeout in seconds |
+| `--max-retries N` | `2` | Maximum retry attempts |
+
+**Customization**: To modify ranking criteria or algorithm settings, see the [Ranking Algorithm](#ranking-algorithm) section below. For detailed LLM configuration, see the [Configuration](#configuration) section.
 
 **Examples:**
 
@@ -75,7 +88,126 @@ uv run darwin "Novel mechanisms for carbon capture" --iterations 10
 
 # Save results as LaTeX + BibTeX files
 uv run darwin "Novel mechanisms for carbon capture" --output-dir ./results
+
+# Use a different model for higher quality results
+uv run darwin "Complex protein folding mechanisms" --model claude-opus-4-6
+
+# Custom endpoint configuration (e.g., OpenRouter)
+uv run darwin "AI safety mechanisms" \
+  --base-url "https://openrouter.ai/api/v1" \
+  --api-key "sk-or-..." \
+  --model "anthropic/claude-sonnet-4-6"
 ```
+
+---
+
+## Configuration
+
+Darwin provides flexible endpoint configuration for different LLM providers and deployment scenarios. Configuration follows a priority system: **CLI flags** > **environment variables** > **config files** > **defaults**.
+
+### CLI Flags
+
+Configure LLM endpoints directly via command-line flags:
+
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--api-key KEY` | API key for LLM service | `--api-key sk-ant-...` |
+| `--auth-token TOKEN` | Alternative authentication token | `--auth-token bearer-...` |
+| `--base-url URL` | Custom API endpoint URL | `--base-url https://api.example.com` |
+| `--timeout SECONDS` | Request timeout in seconds | `--timeout 60.0` |
+| `--max-retries N` | Maximum retry attempts | `--max-retries 3` |
+| `--model MODEL` | LLM model to use | `--model claude-opus-4-6` |
+
+**Example:**
+```bash
+uv run darwin "Your research question" \
+  --base-url "https://openrouter.ai/api/v1" \
+  --api-key "sk-or-..." \
+  --model "anthropic/claude-sonnet-4-6" \
+  --timeout 45.0
+```
+
+### Environment Variables
+
+Configure via environment variables for persistent settings:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ANTHROPIC_API_KEY` | Anthropic API key | _(required)_ |
+| `ANTHROPIC_AUTH_TOKEN` | Alternative auth token | _(none)_ |
+| `ANTHROPIC_BASE_URL` | API base URL | `https://api.anthropic.com` |
+| `DARWIN_MODEL` | LLM model name | `claude-sonnet-4-6` |
+| `DARWIN_TIMEOUT` | Request timeout (seconds) | _(none)_ |
+| `DARWIN_MAX_RETRIES` | Max retry attempts | `2` |
+
+**Example:**
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+export DARWIN_MODEL=claude-opus-4-6
+export DARWIN_TIMEOUT=30.0
+uv run darwin "Your research question"
+```
+
+### Configuration Files
+
+Create persistent configuration with TOML files. Darwin searches for:
+
+1. `./darwin.toml` (current directory)
+2. `~/.config/darwin/darwin.toml` (user config)
+
+**Format:**
+```toml
+[llm]
+# Authentication (choose one)
+api_key = "your-anthropic-api-key"
+# auth_token = "alternative-auth-token"
+
+# Endpoint configuration
+base_url = "https://api.anthropic.com"
+model = "claude-sonnet-4-6"
+
+# Request settings
+timeout = 30.0
+max_retries = 2
+```
+
+### Configuration Examples
+
+**Local Ollama server:**
+```toml
+[llm]
+base_url = "http://localhost:11434"
+model = "llama3.2:latest"
+timeout = 60.0
+```
+
+**OpenRouter (third-party Claude access):**
+```toml
+[llm]
+api_key = "sk-or-..."
+base_url = "https://openrouter.ai/api/v1"
+model = "anthropic/claude-sonnet-4-6"
+```
+
+**Corporate proxy:**
+```toml
+[llm]
+api_key = "corp-key-..."
+base_url = "https://ai-gateway.corp.com/anthropic"
+timeout = 45.0
+max_retries = 3
+```
+
+### Priority System
+
+Configuration values are resolved in this order (first found wins):
+
+1. **CLI flags** — `--api-key`, `--model`, etc.
+2. **Environment variables** — `ANTHROPIC_API_KEY`, `DARWIN_MODEL`, etc.
+3. **Config files** — `./darwin.toml` or `~/.config/darwin/darwin.toml`
+4. **Defaults** — Built-in fallback values
+
+This allows you to set base configuration in files and override specific values via environment or CLI as needed.
 
 ---
 
