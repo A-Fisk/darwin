@@ -210,18 +210,19 @@ class TestCitationLogger:
         with tempfile.TemporaryDirectory() as temp_dir:
             logger = CitationLogger(temp_dir)
 
-            # Create a mock successful verification
+            # Create a mock successful verification with better supporting literature
             parser = CitationParser()
             verifier = CitationVerifier()
 
             literature = [{
                 "paper_id": "test123",
-                "title": "Test Paper",
+                "title": "Research Demonstrates Machine Learning Effectiveness",
                 "authors": "Test Author",
-                "year": "2023"
+                "year": "2023",
+                "abstract": "This research demonstrates the effectiveness of machine learning algorithms in various applications."
             }]
 
-            text = "Research demonstrates effectiveness [test123]."
+            text = "Research demonstrates machine learning effectiveness [test123]."
             requirements = parser.parse_for_citations(text)
             result = verifier.verify_citation_requirement(requirements[0], literature)
 
@@ -239,13 +240,16 @@ class TestCitationLogger:
         with tempfile.TemporaryDirectory() as temp_dir:
             logger = CitationLogger(temp_dir)
 
-            # Create multiple log entries
+            # Create multiple log entries using text that will generate citation requirements
             parser = CitationParser()
             verifier = CitationVerifier()
 
             for i in range(3):
-                text = f"Test claim {i} without proper support."
+                text = f"Studies show that test claim {i} demonstrates significant improvement."
                 requirements = parser.parse_for_citations(text)
+                # Ensure we have requirements before proceeding
+                assert len(requirements) > 0, f"No requirements generated for text: {text}"
+
                 result = verifier.verify_citation_requirement(requirements[0], [])
 
                 logger.log_citation_failure(
